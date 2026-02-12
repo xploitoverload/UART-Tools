@@ -169,9 +169,9 @@ set_time() {
     fi
     
     # Optional: Send hwclock sync command
-    # log INFO "Syncing hardware clock..."
-    # echo -e "hwclock -w\r\n" > "$UART_PORT"
-    # sleep 0.5
+    log INFO "Syncing hardware clock..."
+    echo -e "hwclock -w\r\n" > "$UART_PORT"
+    sleep 0.5
     
     return 0
 }
