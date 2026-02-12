@@ -1,4 +1,8 @@
 # [CLASSIFIED] UART EXPLOITATION TOOLKIT
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform: Linux](https://img.shields.io/badge/Platform-Linux-green.svg)]()
+[![Shell: Bash 4.0+](https://img.shields.io/badge/Shell-Bash%204.0%2B-orange.svg)]()
+
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────┐
