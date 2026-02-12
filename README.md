@@ -504,8 +504,8 @@ BYPASS TECHNIQUES:
 
 ```bash
 # Clone the arsenal
-git clone https://github.com/[REDACTED]/uart-exploits.git
-cd uart-exploits
+git clone https://github.com/xploitoverload/UART-Tools.git
+cd UART-Tools
 
 # Install dependencies
 sudo apt-get update
