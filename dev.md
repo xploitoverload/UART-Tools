@@ -62,7 +62,7 @@ The UART Development Toolkit is a comprehensive suite of shell-based utilities d
 ### Component Overview
 
 ```
-uart-toolkit/
+UART-Tools/
 ├── time-sync.sh       # Time synchronization daemon
 ├── file-transfer.sh   # File transfer with protocol support
 ├── rce.sh         # Remote command execution framework
@@ -139,8 +139,8 @@ ls -l /dev/ttyUSB0  # Should show crw-rw---- ... root dialout
 
 #### Method 1: Direct Download
 ```bash
-git clone https://github.com/yourusername/uart-toolkit.git
-cd uart-toolkit
+git clone https://github.com/xploitoverload/UART-Tools.git
+cd UART-Tools
 chmod +x *.sh
 ```
 
@@ -638,7 +638,7 @@ cleanup() {
 
 ### Global Configuration File
 
-Create `/etc/uart-toolkit.conf`:
+Create `/etc/UART-Tools.conf`:
 
 ```bash
 # Global configuration for UART toolkit
@@ -659,12 +659,12 @@ TIMESTAMP_FORMAT="%Y-%m-%d %H:%M:%S"
 
 Source in scripts:
 ```bash
-[ -f /etc/uart-toolkit.conf ] && source /etc/uart-toolkit.conf
+[ -f /etc/UART-Tools.conf ] && source /etc/UART-Tools.conf
 ```
 
 ### Per-User Configuration
 
-Create `~/.uart-toolkit.conf`:
+Create `~/.UART-Tools.conf`:
 
 ```bash
 # User-specific overrides
@@ -692,8 +692,8 @@ export VERBOSE=1
 
 1. Command-line arguments (highest priority)
 2. Environment variables
-3. User config (`~/.uart-toolkit.conf`)
-4. Global config (`/etc/uart-toolkit.conf`)
+3. User config (`~/.UART-Tools.conf`)
+4. Global config (`/etc/UART-Tools.conf`)
 5. Built-in defaults (lowest priority)
 
 ---
@@ -1114,7 +1114,7 @@ grep ERROR /var/log/uart.log
 awk '/ERROR/ {count++} END {print count}' /var/log/uart.log
 ```
 
-**Log Rotation** (add to `/etc/logrotate.d/uart-toolkit`):
+**Log Rotation** (add to `/etc/logrotate.d/UART-Tools`):
 ```
 /var/log/uart*.log {
     daily
@@ -1219,7 +1219,7 @@ sudo systemctl status uart-monitor.service
 
 Automatically trigger actions on device connection:
 
-**Create** `/etc/udev/rules.d/99-uart-toolkit.rules`:
+**Create** `/etc/udev/rules.d/99-UART-Tools.rules`:
 ```
 # Trigger time sync when FTDI device connected
 ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", \
@@ -1292,8 +1292,8 @@ ENTRYPOINT ["/usr/local/bin/uart_menu.sh"]
 
 **Build and Run**:
 ```bash
-docker build -t uart-toolkit .
-docker run --device=/dev/ttyUSB0 -it uart-toolkit
+docker build -t UART-Tools .
+docker run --device=/dev/ttyUSB0 -it UART-Tools
 ```
 
 ---
@@ -1304,7 +1304,7 @@ MIT License - See LICENSE file for details
 
 ## Authors
 
-- Your Name <your.email@example.com>
+- Kalpesh Solanki <owner@kalpeshsolanki.me>
 
 ## Acknowledgments
 
@@ -1315,9 +1315,9 @@ MIT License - See LICENSE file for details
 
 ## Support
 
-- Issues: https://github.com/yourusername/uart-toolkit/issues
-- Documentation: https://uart-toolkit.readthedocs.io
-- Discussions: https://github.com/yourusername/uart-toolkit/discussions
+- Issues: https://github.com/xploitoverload/UART-Tools/issues
+- Documentation: https://UART-Tools.readthedocs.io
+- Discussions: https://github.com/xploitoverload/UART-Tools/discussions
 
 ---
 
