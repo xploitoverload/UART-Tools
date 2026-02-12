@@ -1,0 +1,32 @@
+# Log files
+*.log
+*.txt.log
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Editor specific
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Serial port lock files
+/var/lock/LCK*
+*.lock
+
+# Output files
+output/
+logs/
