@@ -1,190 +1,220 @@
-# UART Utilities Suite
+# UART-TOOLS
 
-**Professional Serial Port Tools for Linux**
+```
+██╗   ██╗ █████╗ ██████╗ ████████╗    ████████╗ ██████╗  ██████╗ ██╗     ███████╗
+██║   ██║██╔══██╗██╔══██╗╚══██╔══╝    ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝
+██║   ██║███████║██████╔╝   ██║          ██║   ██║   ██║██║   ██║██║     ███████╗
+██║   ██║██╔══██║██╔══██╗   ██║          ██║   ██║   ██║██║   ██║██║     ╚════██║
+╚██████╔╝██║  ██║██║  ██║   ██║          ██║   ╚██████╔╝╚██████╔╝███████╗███████║
+ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝          ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
+```
 
-A comprehensive collection of command-line utilities for interacting with embedded devices over UART/serial connections. This toolkit provides essential features for device communication, debugging, and maintenance.
+**Serial Port Exploitation Framework for Linux**
 
-## Features
+> *Control the hardware. Control everything.*
 
-### 🕐 Time Synchronization (`time-sync.sh`)
-- Sync system time to embedded devices via serial port
-- Support for multiple time formats
-- Automatic retry on failure
-- Configurable baud rates
+A terminal-based exploitation framework for embedded device manipulation through UART/serial interfaces. Built for security researchers, hardware hackers, and embedded systems engineers who need direct low-level access to device communication protocols.
 
-### 📁 File Transfer (`file-transfer.sh`)
-- Send and receive files over serial connections
-- Support for XMODEM, YMODEM, and ZMODEM protocols
-- Progress tracking and verification
-- Error handling and retry mechanisms
+## Exploitation Modules
 
-### 🔧 Remote Command Execution (`rce.sh`)
-- Execute commands on remote devices over serial
-- Interactive and batch mode support
-- Command history and logging
-- Configurable timeout settings
+### 🎯 TIME_SYNC (`time-sync.sh`)
+**Temporal Synchronization Attack**
+- Inject system time into target embedded devices
+- Support for multiple time format vectors
+- Automatic retry on connection failure
+- Configurable baud rate adaptation
 
-### 🔄 Firmware Update (`fw-update.sh`)
-- Flash firmware to embedded devices
-- Automatic backup before updates
-- Verification and integrity checks
-- Rollback support on failure
+### 📡 FILE_XFER (`file-transfer.sh`)
+**Payload Deployment System**
+- Covert file transmission over serial channels
+- Multi-protocol support: XMODEM, YMODEM, ZMODEM
+- Real-time progress monitoring and verification
+- Error detection and retry mechanisms
 
-### 📊 Logger & Monitor (`logger.sh`)
-- Capture serial port output in real-time
-- Filter and analyze logged data
-- Timestamp support
-- Multiple output formats
+### ⚡ REMOTE_EXEC (`rce.sh`)
+**Remote Code Execution Engine**
+- Direct command execution on target devices
+- Interactive shell mode for persistent access
+- Batch script execution support
+- Command history and session logging
 
-## Requirements
+### 🔧 FW_FLASH (`fw-update.sh`)
+**Firmware Manipulation Tool**
+- Flash custom firmware to embedded targets
+- Automatic backup before modification
+- Integrity verification and validation
+- Rollback support on failure detection
 
-### System Dependencies
-- **bash** (version 4.0 or higher)
-- **stty** - Serial port configuration
-- **minicom** or **screen** - Terminal emulator
-- **lrzsz** - XMODEM/YMODEM/ZMODEM protocol support (for file transfers)
+### 📊 SERIAL_MON (`logger.sh`)
+**Traffic Analysis Monitor**
+- Real-time serial port traffic capture
+- Pattern matching and data filtering
+- Colorized output for rapid analysis
+- Multiple output formats for post-processing
 
-### Permissions
-- Access to serial ports (typically `/dev/ttyUSB*` or `/dev/ttyS*`)
-- Add user to `dialout` group: `sudo usermod -a -G dialout $USER`
+## System Requirements
 
-## Installation
+### Core Dependencies
+- **bash** (version 4.0+) - Command interpreter
+- **stty** - Serial port configuration utility
+- **minicom** or **screen** - Terminal emulation
+- **lrzsz** - Protocol support for XMODEM/YMODEM/ZMODEM
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/xploitoverload/UART-Tools.git
-   cd UART-Tools
-   ```
+### Access Requirements
+- Serial port access permissions (typically `/dev/ttyUSB*` or `/dev/ttyS*`)
+- Dialout group membership: `sudo usermod -a -G dialout $USER`
+- **NOTE**: Session restart required after permission changes
 
-2. **Make scripts executable:**
-   ```bash
-   chmod +x *.sh
-   ```
+## Deployment
 
-3. **Install dependencies (Ubuntu/Debian):**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install minicom lrzsz
-   ```
+**1. Clone the framework:**
+```bash
+git clone https://github.com/xploitoverload/UART-Tools.git
+cd UART-Tools
+```
 
-4. **Verify serial port access:**
-   ```bash
-   ls -l /dev/ttyUSB*
-   # or
-   ls -l /dev/ttyS*
-   ```
+**2. Grant execution permissions:**
+```bash
+chmod +x *.sh
+```
 
-## Usage
+**3. Install system dependencies (Ubuntu/Debian):**
+```bash
+sudo apt-get update
+sudo apt-get install minicom lrzsz
+```
 
-### Interactive Menu
-Launch the master menu for easy access to all utilities:
+**4. Verify target enumeration:**
+```bash
+ls -l /dev/ttyUSB*    # USB serial adapters
+ls -l /dev/ttyS*      # Native serial ports
+```
+
+## Operation
+
+### Interactive Framework
+Launch the main exploitation interface:
 ```bash
 ./menu.sh
 ```
 
-### Individual Tools
+This provides access to all modules through a terminal-based UI with device enumeration, configuration management, and real-time execution.
 
-#### Time Synchronization
+### Direct Module Execution
+
+#### Temporal Synchronization
 ```bash
 ./time-sync.sh /dev/ttyUSB0 115200
 ```
 
-#### File Transfer
+#### Payload Deployment
 ```bash
-./file-transfer.sh /dev/ttyUSB0 115200 send myfile.bin
-./file-transfer.sh /dev/ttyUSB0 115200 receive output.bin
+# Deploy to target
+./file-transfer.sh /dev/ttyUSB0 115200 send payload.bin
+
+# Extract from target
+./file-transfer.sh /dev/ttyUSB0 115200 receive extracted.bin
 ```
 
-#### Remote Command Execution
+#### Remote Code Execution
 ```bash
-./rce.sh /dev/ttyUSB0 115200 "ls -la"
+./rce.sh /dev/ttyUSB0 115200 "cat /etc/passwd"
 ```
 
-#### Firmware Update
+#### Firmware Manipulation
 ```bash
-./fw-update.sh /dev/ttyUSB0 115200 firmware.bin
+./fw-update.sh /dev/ttyUSB0 115200 custom_firmware.bin
 ```
 
-#### Serial Logger
+#### Traffic Monitoring
 ```bash
-./logger.sh /dev/ttyUSB0 115200 logfile.txt
+./logger.sh /dev/ttyUSB0 115200 capture.log
 ```
 
 ## Configuration
 
-Each script supports configuration through:
-- **Command-line arguments** - Primary method for runtime options
-- **Environment variables** - For default settings
-- **Inline configuration** - Edit the Configuration section in each script
+Each module supports multiple configuration vectors:
+- **Command-line parameters** - Direct runtime specification
+- **Environment variables** - Persistent session defaults
+- **Inline modification** - Edit configuration blocks in source
 
-Common configuration options:
-- Serial port device (e.g., `/dev/ttyUSB0`)
-- Baud rate (e.g., `115200`)
-- Timeout values
-- Protocol-specific settings
+### Common Configuration Parameters
+- `UART_PORT` - Target device path (e.g., `/dev/ttyUSB0`)
+- `BAUD_UART` - Communication speed (e.g., `115200`)
+- `TIMEOUT` - Operation timeout values
+- `VERBOSE` - Enable detailed logging output
 
 ## Troubleshooting
 
-### Permission Denied
+### Access Denied
 ```bash
-# Add user to dialout group
+# Grant serial port access
 sudo usermod -a -G dialout $USER
-# Log out and log back in for changes to take effect
+# Restart session for changes to take effect
 ```
 
-### Device Not Found
+### Target Not Found
 ```bash
-# List available serial devices
+# Enumerate available targets
 ls -l /dev/tty{USB,S,AMA,ACM}*
-# Check if device is connected
+
+# Check kernel detection
 dmesg | grep tty
 ```
 
-### Communication Errors
-- Verify baud rate matches device configuration
-- Check cable connections and quality
-- Ensure no other program is using the serial port
-- Try different protocols (XMODEM vs YMODEM vs ZMODEM)
+### Communication Failure
+- Verify baud rate matches target configuration
+- Inspect physical connections and cable integrity
+- Ensure no other process is accessing the port
+- Test alternative protocols (XMODEM → YMODEM → ZMODEM)
 
-## Project Structure
+## Framework Architecture
 
 ```
 UART-Tools/
-├── menu.sh              # Master interactive menu
-├── time-sync.sh         # Time synchronization utility
-├── file-transfer.sh     # File transfer utility
-├── rce.sh              # Remote command execution
-├── fw-update.sh        # Firmware update tool
-├── logger.sh           # Serial port logger
-├── README.md           # This file
+├── menu.sh              # Main exploitation interface
+├── time-sync.sh         # Temporal synchronization module
+├── file-transfer.sh     # Payload deployment system
+├── rce.sh              # Remote code execution engine
+├── fw-update.sh        # Firmware manipulation tool
+├── logger.sh           # Traffic analysis monitor
+├── README.md           # Framework documentation
 └── LICENSE             # MIT License
 ```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
+Contributions from the security research and embedded systems community are welcome.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/advanced-exploit`)
+3. Commit your changes (`git commit -m 'Add new exploitation vector'`)
+4. Push to the branch (`git push origin feature/advanced-exploit`)
 5. Open a Pull Request
 
-## Author
+## Creator
 
 **Kalpesh Solanki** ([@xploitoverload](https://github.com/xploitoverload))
+
+*Hardware security researcher and embedded systems specialist*
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+**DISCLAIMER**: This framework is intended for authorized security research and legitimate embedded systems development only. Users are responsible for ensuring compliance with applicable laws and regulations.
+
 ## Acknowledgments
 
-- Built for the embedded systems and IoT development community
-- Inspired by the need for reliable serial communication tools
-- Thanks to all contributors and users of this toolkit
+- Designed for security researchers and hardware hackers
+- Built on proven serial communication protocols
+- Inspired by the need for low-level hardware access tools
+- Community-driven development
 
 ---
 
-**Version:** 1.0  
-**Last Updated:** 2026-02-12
+```
+[>] Framework Version: 1.0
+[>] Last Updated: 2026-02-12
+[>] Status: OPERATIONAL
+```
