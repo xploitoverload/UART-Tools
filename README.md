@@ -32,7 +32,7 @@
 ```
 USER: root@xploitoverload
 HOST: xploitoverload
-PATH: ~/uart_exploits
+PATH: ~/UART-Tools
 TIME: [REDACTED]
 
 > You're in. But remember, with great power comes great responsibility.
