@@ -6,45 +6,58 @@
 
 set -euo pipefail
 
-# Colors
+# Colors - Mr. Robot Theme
 RED='\033[0;31m'
-GREEN='\033[0;32m'
+GREEN='\033[1;32m'      # Bright green for hacker aesthetic
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
+CYAN='\033[1;36m'       # Bright cyan
 MAGENTA='\033[0;35m'
+GRAY='\033[0;90m'       # Dark gray
+BRIGHT_RED='\033[1;31m'
 NC='\033[0m'
+BOLD='\033[1m'
+DIM='\033[2m'
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Available utilities
 declare -A UTILITIES=(
-    [1]="time-sync.sh|Time Synchronization|Sync system time to embedded device"
-    [2]="file-transfer.sh|File Transfer|Send/receive files via XMODEM/YMODEM/ZMODEM"
-    [3]="rce.sh|Remote Command Execution|Execute commands on device"
-    [4]="fw-update.sh|Firmware Update|Flash firmware with backup and verification"
-    [5]="logger.sh|Logger & Monitor|Capture and analyze serial output"
+    [1]="time-sync.sh|[TIME_SYNC]|Sync system time to embedded device"
+    [2]="file-transfer.sh|[FILE_XFER]|Send/receive files via XMODEM/YMODEM/ZMODEM"
+    [3]="rce.sh|[REMOTE_EXEC]|Execute commands on device"
+    [4]="fw-update.sh|[FW_FLASH]|Flash firmware with backup and verification"
+    [5]="logger.sh|[SERIAL_MON]|Capture and analyze serial output"
 )
 
 # Display banner
 show_banner() {
     clear
+    echo -e "${GREEN}"
     cat << "EOF"
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║            UART UTILITIES SUITE v1.0                      ║
-║       Professional Serial Port Tools for Linux            ║
-║     Tool made by Kalpesh Solanki | xploitoverload         ║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
+    ██╗   ██╗ █████╗ ██████╗ ████████╗    ████████╗ ██████╗  ██████╗ ██╗     ███████╗
+    ██║   ██║██╔══██╗██╔══██╗╚══██╔══╝    ╚══██╔══╝██╔═══██╗██╔═══██╗██║     ██╔════╝
+    ██║   ██║███████║██████╔╝   ██║          ██║   ██║   ██║██║   ██║██║     ███████╗
+    ██║   ██║██╔══██║██╔══██╗   ██║          ██║   ██║   ██║██║   ██║██║     ╚════██║
+    ╚██████╔╝██║  ██║██║  ██║   ██║          ██║   ╚██████╔╝╚██████╔╝███████╗███████║
+     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝          ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝╚══════╝
 EOF
+    echo -e "${NC}"
+    echo -e "${DIM}${GRAY}    ┌────────────────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${DIM}${GRAY}    │${NC} ${CYAN}SERIAL PORT EXPLOITATION FRAMEWORK${NC} ${GREEN}v1.0${NC}                        ${DIM}${GRAY}│${NC}"
+    echo -e "${DIM}${GRAY}    │${NC} ${DIM}Hardware Interface Control System for Embedded Devices${NC}         ${DIM}${GRAY}│${NC}"
+    echo -e "${DIM}${GRAY}    ├────────────────────────────────────────────────────────────────────┤${NC}"
+    echo -e "${DIM}${GRAY}    │${NC} ${DIM}[~]${NC} Operator: ${GREEN}$(whoami)${NC}@${GREEN}$(hostname)${NC}                                       ${DIM}${GRAY}│${NC}"
+    echo -e "${DIM}${GRAY}    │${NC} ${DIM}[~]${NC} Access Level: ${YELLOW}PRIVILEGED${NC}                                     ${DIM}${GRAY}│${NC}"
+    echo -e "${DIM}${GRAY}    │${NC} ${DIM}[~]${NC} Created by: ${CYAN}Kalpesh Solanki${NC} ${DIM}|${NC} ${CYAN}xploitoverload${NC}                ${DIM}${GRAY}│${NC}"
+    echo -e "${DIM}${GRAY}    └────────────────────────────────────────────────────────────────────┘${NC}"
     echo
 }
 
 # Display menu
 show_menu() {
-    echo -e "${CYAN}Available Utilities:${NC}"
+    echo -e "${GREEN}[>]${NC} ${BOLD}EXPLOITATION MODULES:${NC}"
     echo
     
     for key in $(echo "${!UTILITIES[@]}" | tr ' ' '\n' | sort -n); do
@@ -52,67 +65,73 @@ show_menu() {
         
         # Check if script exists
         if [ -f "$SCRIPT_DIR/$script" ]; then
-            status="${GREEN}✓${NC}"
+            status="${GREEN}[+]${NC}"
         else
-            status="${RED}✗${NC}"
+            status="${RED}[-]${NC}"
         fi
         
-        printf "  ${YELLOW}[%s]${NC} %s %-30s - %s\n" "$key" "$status" "$name" "$desc"
+        printf "    ${YELLOW}[%s]${NC} %s ${CYAN}%-15s${NC} ${DIM}//${NC} %s\n" "$key" "$status" "$name" "$desc"
     done
     
     echo
-    echo -e "${CYAN}Quick Actions:${NC}"
-    echo -e "  ${YELLOW}[q]${NC} Quick Start Guide"
-    echo -e "  ${YELLOW}[d]${NC} Device Detection"
-    echo -e "  ${YELLOW}[c]${NC} Configuration"
-    echo -e "  ${YELLOW}[h]${NC} Help & Documentation"
-    echo -e "  ${YELLOW}[x]${NC} Exit"
+    echo -e "${GREEN}[>]${NC} ${BOLD}SYSTEM OPERATIONS:${NC}"
+    echo -e "    ${YELLOW}[q]${NC} ${CYAN}[INIT_GUIDE]${NC}    ${DIM}// Quick start initialization${NC}"
+    echo -e "    ${YELLOW}[d]${NC} ${CYAN}[DEV_SCAN]${NC}      ${DIM}// Device detection and enumeration${NC}"
+    echo -e "    ${YELLOW}[c]${NC} ${CYAN}[CONFIG]${NC}        ${DIM}// System configuration${NC}"
+    echo -e "    ${YELLOW}[h]${NC} ${CYAN}[HELP]${NC}          ${DIM}// Documentation and help${NC}"
+    echo -e "    ${YELLOW}[x]${NC} ${CYAN}[EXIT]${NC}          ${DIM}// Terminate session${NC}"
     echo
+    echo -ne "${GREEN}root@uart${NC}:${CYAN}~${NC}# "
 }
 
 # Quick start guide
 quick_start() {
     clear
+    echo -e "${GREEN}"
+    cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────┐
+    │  INITIALIZATION PROTOCOL                                    │
+    └─────────────────────────────────────────────────────────────┘
+EOF
+    echo -e "${NC}"
+    
     cat << EOF
-${CYAN}╔═══════════════════════════════════════════════════════════╗
-║                    QUICK START GUIDE                      ║
-╚═══════════════════════════════════════════════════════════╝${NC}
 
-${YELLOW}1. First Time Setup${NC}
-   • Ensure device is connected
-   • Check permissions: ${GREEN}sudo usermod -a -G dialout \$USER${NC}
-   • Logout and login again
+${GREEN}[>]${NC} ${BOLD}PHASE 1: SYSTEM SETUP${NC}
+    ${DIM}>>${NC} Verify hardware connection established
+    ${DIM}>>${NC} Grant access privileges: ${GREEN}sudo usermod -a -G dialout \$USER${NC}
+    ${DIM}>>${NC} ${RED}[!]${NC} Session restart required for permissions
 
-${YELLOW}2. Detect Your Device${NC}
-   • Press 'd' in main menu
-   • Note the port (e.g., /dev/ttyUSB0)
+${GREEN}[>]${NC} ${BOLD}PHASE 2: DEVICE ENUMERATION${NC}
+    ${DIM}>>${NC} Execute option ${YELLOW}[d]${NC} for device scanning
+    ${DIM}>>${NC} Note target port (e.g., ${CYAN}/dev/ttyUSB0${NC})
 
-${YELLOW}3. Test Connection${NC}
-   • Select option 5 (Logger & Monitor)
-   • Run: ${GREEN}tail${NC}
-   • Check if you see device output
+${GREEN}[>]${NC} ${BOLD}PHASE 3: CONNECTION VALIDATION${NC}
+    ${DIM}>>${NC} Select ${YELLOW}[5]${NC} ${CYAN}[SERIAL_MON]${NC}
+    ${DIM}>>${NC} Execute: ${GREEN}tail${NC} command
+    ${DIM}>>${NC} Confirm data stream from target device
 
-${YELLOW}4. Common Tasks${NC}
-   • Sync time: Option 1
-   • Send file: Option 2 → send filename.bin
-   • Run command: Option 3 → exec "ls -la"
-   • Update firmware: Option 4 → update firmware.bin
-   • Monitor output: Option 5 → monitor
+${GREEN}[>]${NC} ${BOLD}COMMON EXPLOITS:${NC}
+    ${YELLOW}[1]${NC} ${CYAN}TIME_SYNC${NC}     ${DIM}// Synchronize system clock${NC}
+    ${YELLOW}[2]${NC} ${CYAN}FILE_XFER${NC}     ${DIM}// Deploy payload: filename.bin${NC}
+    ${YELLOW}[3]${NC} ${CYAN}REMOTE_EXEC${NC}   ${DIM}// Execute: "ls -la"${NC}
+    ${YELLOW}[4]${NC} ${CYAN}FW_FLASH${NC}      ${DIM}// Flash target: firmware.bin${NC}
+    ${YELLOW}[5]${NC} ${CYAN}SERIAL_MON${NC}    ${DIM}// Monitor target output${NC}
 
-${YELLOW}5. Examples${NC}
-   ${GREEN}# Time sync${NC}
-   ./time-sync.sh -p /dev/ttyUSB0 -v
-   
-   ${GREEN}# Send file${NC}
-   ./file-transfer.sh send config.txt
-   
-   ${GREEN}# Interactive shell${NC}
-   ./rce.sh shell
-   
-   ${GREEN}# Monitor with filtering${NC}
-   ./logger.sh -f "ERROR|WARN" monitor
+${GREEN}[>]${NC} ${BOLD}USAGE EXAMPLES:${NC}
+    ${DIM}#${NC} Time synchronization attack
+    ${GREEN}\$${NC} ./time-sync.sh -p /dev/ttyUSB0 -v
+    
+    ${DIM}#${NC} Deploy configuration file
+    ${GREEN}\$${NC} ./file-transfer.sh send config.txt
+    
+    ${DIM}#${NC} Interactive shell access
+    ${GREEN}\$${NC} ./rce.sh shell
+    
+    ${DIM}#${NC} Monitor with pattern matching
+    ${GREEN}\$${NC} ./logger.sh -f "ERROR|WARN" monitor
 
-Press any key to continue...
+${DIM}Press any key to return to main menu...${NC}
 EOF
     read -n 1 -s
 }
@@ -120,111 +139,124 @@ EOF
 # Device detection
 detect_devices() {
     clear
-    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════╗"
-    echo -e "║                   DEVICE DETECTION                        ║"
-    echo -e "╚═══════════════════════════════════════════════════════════╝${NC}"
-    echo
+    echo -e "${GREEN}"
+    cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────┐
+    │  DEVICE ENUMERATION                                         │
+    └─────────────────────────────────────────────────────────────┘
+EOF
+    echo -e "${NC}"
     
-    echo -e "${YELLOW}Scanning for serial devices...${NC}"
+    echo -e "${GREEN}[>]${NC} ${BOLD}Scanning for target devices...${NC}"
     echo
     
     # USB Serial devices
-    echo -e "${CYAN}USB Serial Devices:${NC}"
+    echo -e "${GREEN}[>]${NC} ${CYAN}USB Serial Interfaces:${NC}"
     if ls /dev/ttyUSB* 2>/dev/null; then
         for dev in /dev/ttyUSB*; do
-            echo -e "  ${GREEN}✓${NC} $dev"
+            echo -ne "    ${GREEN}[+]${NC} $dev "
             if [ -r "$dev" ] && [ -w "$dev" ]; then
-                echo -e "    ${GREEN}Accessible${NC}"
+                echo -e "${GREEN}[ACCESSIBLE]${NC}"
             else
-                echo -e "    ${RED}Permission denied${NC} (run: sudo usermod -a -G dialout \$USER)"
+                echo -e "${RED}[DENIED]${NC} ${DIM}// Grant access: sudo usermod -a -G dialout \$USER${NC}"
             fi
         done
     else
-        echo -e "  ${YELLOW}None found${NC}"
+        echo -e "    ${YELLOW}[!]${NC} ${DIM}No USB serial devices detected${NC}"
     fi
     echo
     
     # ACM devices (Arduino, etc.)
-    echo -e "${CYAN}ACM Devices:${NC}"
+    echo -e "${GREEN}[>]${NC} ${CYAN}ACM Devices:${NC}"
     if ls /dev/ttyACM* 2>/dev/null; then
         for dev in /dev/ttyACM*; do
-            echo -e "  ${GREEN}✓${NC} $dev"
+            echo -e "    ${GREEN}[+]${NC} $dev ${GREEN}[DETECTED]${NC}"
         done
     else
-        echo -e "  ${YELLOW}None found${NC}"
+        echo -e "    ${YELLOW}[!]${NC} ${DIM}No ACM devices detected${NC}"
     fi
     echo
     
     # USB devices info
-    echo -e "${CYAN}Connected USB Devices:${NC}"
+    echo -e "${GREEN}[>]${NC} ${CYAN}USB Hardware Enumeration:${NC}"
     if command -v lsusb &>/dev/null; then
-        lsusb | grep -i "serial\|uart\|usb.*serial\|ftdi\|cp210\|ch340" || echo "  ${YELLOW}No serial adapters detected${NC}"
+        lsusb | grep -i "serial\|uart\|usb.*serial\|ftdi\|cp210\|ch340" | while read line; do
+            echo -e "    ${GREEN}[+]${NC} ${DIM}$line${NC}"
+        done || echo -e "    ${YELLOW}[!]${NC} ${DIM}No serial adapters in USB subsystem${NC}"
     else
-        echo -e "  ${YELLOW}lsusb not available${NC}"
+        echo -e "    ${RED}[-]${NC} ${DIM}lsusb utility not available${NC}"
     fi
     echo
     
     # Recent kernel messages
-    echo -e "${CYAN}Recent Serial Device Messages:${NC}"
+    echo -e "${GREEN}[>]${NC} ${CYAN}Kernel Message Buffer:${NC}"
     if command -v dmesg &>/dev/null && [ -r /var/log/dmesg ]; then
-        dmesg | grep -i "tty\|serial\|usb" | tail -5 || echo "  ${YELLOW}No recent messages${NC}"
+        dmesg | grep -i "tty\|serial\|usb" | tail -5 | while read line; do
+            echo -e "    ${DIM}$line${NC}"
+        done || echo -e "    ${YELLOW}[!]${NC} ${DIM}No recent kernel messages${NC}"
     else
-        echo -e "  ${YELLOW}dmesg not accessible${NC}"
+        echo -e "    ${RED}[-]${NC} ${DIM}dmesg not accessible${NC}"
     fi
     echo
     
-    echo "Press any key to continue..."
+    echo -e "${DIM}Press any key to return...${NC}"
     read -n 1 -s
 }
 
 # Configuration
 configure() {
     clear
-    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════╗"
-    echo -e "║                     CONFIGURATION                         ║"
-    echo -e "╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}"
+    cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────┐
+    │  SYSTEM CONFIGURATION                                       │
+    └─────────────────────────────────────────────────────────────┘
+EOF
+    echo -e "${NC}"
+    
+    echo -e "${GREEN}[>]${NC} ${BOLD}Current Parameters:${NC}"
+    echo -e "    ${CYAN}UART_PORT:${NC} ${UART_PORT:-/dev/ttyUSB0}"
+    echo -e "    ${CYAN}BAUD_UART:${NC} ${BAUD_UART:-115200}"
+    echo -e "    ${CYAN}VERBOSE:${NC}   ${VERBOSE:-0}"
     echo
     
-    echo -e "${YELLOW}Current Configuration:${NC}"
-    echo "  UART_PORT: ${UART_PORT:-/dev/ttyUSB0}"
-    echo "  BAUD_UART: ${BAUD_UART:-115200}"
-    echo "  VERBOSE: ${VERBOSE:-0}"
+    echo -e "${GREEN}[>]${NC} ${BOLD}Configuration Options:${NC}"
+    echo -e "    ${YELLOW}[1]${NC} Set target port"
+    echo -e "    ${YELLOW}[2]${NC} Set baud rate"
+    echo -e "    ${YELLOW}[3]${NC} Toggle verbose mode"
+    echo -e "    ${YELLOW}[4]${NC} Export configuration"
+    echo -e "    ${YELLOW}[5]${NC} Load configuration"
+    echo -e "    ${YELLOW}[b]${NC} Back to main menu"
     echo
+    echo -ne "${GREEN}config${NC}@${CYAN}uart${NC}# "
     
-    echo -e "${CYAN}Options:${NC}"
-    echo "  [1] Set port"
-    echo "  [2] Set baud rate"
-    echo "  [3] Toggle verbose mode"
-    echo "  [4] Export configuration"
-    echo "  [5] Load configuration"
-    echo "  [b] Back to main menu"
-    echo
-    
-    read -p "Select option: " config_choice
+    read config_choice
     
     case "$config_choice" in
         1)
-            read -p "Enter port (e.g., /dev/ttyUSB0): " port
+            echo -ne "${GREEN}[>]${NC} Enter port (e.g., /dev/ttyUSB0): "
+            read port
             export UART_PORT="$port"
-            echo -e "${GREEN}Port set to: $port${NC}"
+            echo -e "${GREEN}[+]${NC} Port configured: $port"
             sleep 1
             configure
             ;;
         2)
-            echo "Common baud rates: 9600, 19200, 38400, 57600, 115200, 230400"
-            read -p "Enter baud rate: " baud
+            echo -e "${DIM}Common rates: 9600, 19200, 38400, 57600, 115200, 230400${NC}"
+            echo -ne "${GREEN}[>]${NC} Enter baud rate: "
+            read baud
             export BAUD_UART="$baud"
-            echo -e "${GREEN}Baud rate set to: $baud${NC}"
+            echo -e "${GREEN}[+]${NC} Baud rate configured: $baud"
             sleep 1
             configure
             ;;
         3)
             if [ "${VERBOSE:-0}" -eq 0 ]; then
                 export VERBOSE=1
-                echo -e "${GREEN}Verbose mode enabled${NC}"
+                echo -e "${GREEN}[+]${NC} Verbose mode ${GREEN}ENABLED${NC}"
             else
                 export VERBOSE=0
-                echo -e "${GREEN}Verbose mode disabled${NC}"
+                echo -e "${GREEN}[+]${NC} Verbose mode ${RED}DISABLED${NC}"
             fi
             sleep 1
             configure
@@ -235,17 +267,17 @@ export UART_PORT="${UART_PORT:-/dev/ttyUSB0}"
 export BAUD_UART="${BAUD_UART:-115200}"
 export VERBOSE="${VERBOSE:-0}"
 EOF
-            echo -e "${GREEN}Configuration exported to uart_config.env${NC}"
-            echo "Load with: source uart_config.env"
+            echo -e "${GREEN}[+]${NC} Configuration exported to ${CYAN}uart_config.env${NC}"
+            echo -e "${DIM}    Load with: source uart_config.env${NC}"
             sleep 2
             configure
             ;;
         5)
             if [ -f "uart_config.env" ]; then
                 source uart_config.env
-                echo -e "${GREEN}Configuration loaded${NC}"
+                echo -e "${GREEN}[+]${NC} Configuration loaded successfully"
             else
-                echo -e "${RED}uart_config.env not found${NC}"
+                echo -e "${RED}[-]${NC} Configuration file not found"
             fi
             sleep 1
             configure
@@ -259,60 +291,65 @@ EOF
 # Show help
 show_help() {
     clear
+    echo -e "${GREEN}"
+    cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────┐
+    │  DOCUMENTATION DATABASE                                     │
+    └─────────────────────────────────────────────────────────────┘
+EOF
+    echo -e "${NC}"
+    
     cat << EOF
-${CYAN}╔═══════════════════════════════════════════════════════════╗
-║                   HELP & DOCUMENTATION                    ║
-╚═══════════════════════════════════════════════════════════╝${NC}
 
-${YELLOW}Available Documentation:${NC}
+${GREEN}[>]${NC} ${BOLD}Available Documentation:${NC}
 
-  1. README.md                - Basic usage guide
-  2. UTILITIES_README.md      - Complete utilities documentation
-  3. Individual script help   - Run any script with -h flag
+    ${CYAN}1.${NC} README.md             ${DIM}// Basic operational guide${NC}
+    ${CYAN}2.${NC} UTILITIES_README.md   ${DIM}// Complete module documentation${NC}
+    ${CYAN}3.${NC} Individual help       ${DIM}// Execute any script with -h flag${NC}
 
-${YELLOW}Quick Help:${NC}
+${GREEN}[>]${NC} ${BOLD}Module Quick Reference:${NC}
 
-  ${GREEN}Time Sync:${NC}
-    ./time-sync.sh -h
+    ${CYAN}TIME_SYNC:${NC}
+      ${GREEN}\$${NC} ./time-sync.sh -h
 
-  ${GREEN}File Transfer:${NC}
-    ./file-transfer.sh -h
-    Protocols: xmodem, ymodem, zmodem, raw
+    ${CYAN}FILE_XFER:${NC}
+      ${GREEN}\$${NC} ./file-transfer.sh -h
+      ${DIM}Protocols: xmodem, ymodem, zmodem, raw${NC}
 
-  ${GREEN}Command Execution:${NC}
-    ./rce.sh -h
-    Modes: exec, script, shell, monitor
+    ${CYAN}REMOTE_EXEC:${NC}
+      ${GREEN}\$${NC} ./rce.sh -h
+      ${DIM}Modes: exec, script, shell, monitor${NC}
 
-  ${GREEN}Firmware Update:${NC}
-    ./fw-update.sh -h
-    Safety: automatic backup, verification
+    ${CYAN}FW_FLASH:${NC}
+      ${GREEN}\$${NC} ./fw-update.sh -h
+      ${DIM}Safety: automatic backup, verification${NC}
 
-  ${GREEN}Logger:${NC}
-    ./logger.sh -h
-    Features: colorization, filtering, analysis
+    ${CYAN}SERIAL_MON:${NC}
+      ${GREEN}\$${NC} ./logger.sh -h
+      ${DIM}Features: colorization, filtering, analysis${NC}
 
-${YELLOW}Common Issues:${NC}
+${GREEN}[>]${NC} ${BOLD}Common Issues & Solutions:${NC}
 
-  ${RED}Permission Denied:${NC}
-    sudo usermod -a -G dialout \$USER
-    Logout and login again
+    ${RED}[!]${NC} ${BOLD}Permission Denied:${NC}
+        ${GREEN}\$${NC} sudo usermod -a -G dialout \$USER
+        ${DIM}Logout and login required for changes${NC}
 
-  ${RED}Port Not Found:${NC}
-    Press 'd' in main menu to detect devices
+    ${RED}[!]${NC} ${BOLD}Port Not Found:${NC}
+        ${DIM}Execute option ${YELLOW}[d]${NC} ${DIM}for device enumeration${NC}
 
-  ${RED}Garbled Output:${NC}
-    Try different baud rate (9600, 115200)
+    ${RED}[!]${NC} ${BOLD}Garbled Output:${NC}
+        ${DIM}Verify baud rate configuration (9600, 115200)${NC}
 
-  ${RED}No Response:${NC}
-    Use logger in tail mode to check output
-    Verify device is powered and connected
+    ${RED}[!]${NC} ${BOLD}No Response:${NC}
+        ${DIM}Use SERIAL_MON in tail mode to verify output${NC}
+        ${DIM}Confirm target power and physical connection${NC}
 
-${YELLOW}Online Resources:${NC}
-  • Serial Programming HOWTO
-  • Linux Serial Console Documentation
-  • Embedded Linux Wiki
+${GREEN}[>]${NC} ${BOLD}External Resources:${NC}
+    ${DIM}• Serial Programming HOWTO${NC}
+    ${DIM}• Linux Serial Console Documentation${NC}
+    ${DIM}• Embedded Linux Wiki${NC}
 
-Press any key to continue...
+${DIM}Press any key to return...${NC}
 EOF
     read -n 1 -s
 }
@@ -322,7 +359,7 @@ launch_utility() {
     local util_num="$1"
     
     if [ -z "${UTILITIES[$util_num]:-}" ]; then
-        echo -e "${RED}Invalid selection${NC}"
+        echo -e "${RED}[-]${NC} Invalid module selection"
         sleep 1
         return
     fi
@@ -330,32 +367,39 @@ launch_utility() {
     IFS='|' read -r script name desc <<< "${UTILITIES[$util_num]}"
     
     if [ ! -f "$SCRIPT_DIR/$script" ]; then
-        echo -e "${RED}Error: $script not found${NC}"
+        echo -e "${RED}[-]${NC} Error: Module $script not found"
         sleep 2
         return
     fi
     
     clear
-    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════╗"
-    echo -e "║  Launching: ${name}$(printf '%*s' $((40-${#name})) '')║"
-    echo -e "╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}"
+    cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────┐
+EOF
+    printf "    │  LAUNCHING: %-48s│\n" "$name"
+    cat << "EOF"
+    └─────────────────────────────────────────────────────────────┘
+EOF
+    echo -e "${NC}"
     echo
     
     # Show quick help
-    echo -e "${YELLOW}Quick Actions:${NC}"
-    echo "  -h : Show full help"
-    echo "  -v : Verbose mode"
+    echo -e "${GREEN}[>]${NC} ${BOLD}Quick Actions:${NC}"
+    echo -e "    ${CYAN}-h${NC} ${DIM}// Show full help${NC}"
+    echo -e "    ${CYAN}-v${NC} ${DIM}// Verbose mode${NC}"
     echo
     
     # Get arguments
-    read -p "Enter arguments (or press Enter for help): " args
+    echo -ne "${GREEN}args${NC}@${CYAN}$name${NC}# "
+    read args
     
     if [ -z "$args" ]; then
         args="-h"
     fi
     
     echo
-    echo -e "${CYAN}Executing: $script $args${NC}"
+    echo -e "${GREEN}[>]${NC} Executing: ${CYAN}$script $args${NC}"
     echo
     
     # Execute
@@ -363,7 +407,7 @@ launch_utility() {
     ./"$script" $args
     
     echo
-    echo -e "${GREEN}Done. Press any key to continue...${NC}"
+    echo -e "${GREEN}[+]${NC} ${DIM}Module execution complete. Press any key to return...${NC}"
     read -n 1 -s
 }
 
@@ -373,7 +417,7 @@ main() {
         show_banner
         show_menu
         
-        read -p "Select option: " choice
+        read choice
         
         case "$choice" in
             [1-5])
@@ -393,11 +437,19 @@ main() {
                 ;;
             x|X)
                 clear
-                echo -e "${GREEN}Thank you for using UART Utilities Suite!${NC}"
+                echo -e "${GREEN}"
+                cat << "EOF"
+    ┌─────────────────────────────────────────────────────────────┐
+    │  SESSION TERMINATED                                         │
+    └─────────────────────────────────────────────────────────────┘
+EOF
+                echo -e "${NC}"
+                echo -e "${DIM}    Connection closed. Exiting framework...${NC}"
+                echo
                 exit 0
                 ;;
             *)
-                echo -e "${RED}Invalid selection${NC}"
+                echo -e "${RED}[-]${NC} Invalid input"
                 sleep 1
                 ;;
         esac
