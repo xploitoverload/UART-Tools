@@ -18,6 +18,8 @@ LOG_FILE="${LOG_FILE:-/var/log/uart_at_commands.log}"
 VERBOSE="${VERBOSE:-0}"
 RESPONSE_WAIT="${RESPONSE_WAIT:-1}"
 LINE_ENDING="${LINE_ENDING:-crlf}"
+CUSTOM_COMMANDS_FILE="${CUSTOM_COMMANDS_FILE:-$HOME/.uart-tools/custom_commands.conf}"
+CUSTOM_CMD_PREFIX="${CUSTOM_CMD_PREFIX:-custom_}"
 
 # Colors
 RED='\033[0;31m'
@@ -28,9 +30,9 @@ CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 NC='\033[0m'
 
-# AT Command library
+# AT Command library (Telit AT Commands Reference Guide r18)
 declare -A AT_COMMANDS=(
-    # Basic AT commands
+    # ========== BASIC COMMANDS ==========
     [test]="AT"
     [info]="ATI"
     [echo_on]="ATE1"
@@ -38,38 +40,172 @@ declare -A AT_COMMANDS=(
     [reset]="ATZ"
     [factory_reset]="AT&F"
     [save_config]="AT&W"
+    [display_config]="AT&V"
+    [quiet_on]="ATQ1"
+    [quiet_off]="ATQ0"
+    [verbose_on]="ATV1"
+    [verbose_off]="ATV0"
     
-    # Identification
+    # ========== IDENTIFICATION ==========
     [manufacturer]="AT+GMI"
     [model]="AT+GMM"
     [firmware]="AT+GMR"
     [serial]="AT+GSN"
     [capabilities]="AT+GCAP"
     
-    # Network (cellular)
+    # ========== NETWORK (CELLULAR) ==========
     [sim_status]="AT+CPIN?"
     [signal_quality]="AT+CSQ"
     [network_reg]="AT+CREG?"
     [operator]="AT+COPS?"
     [list_operators]="AT+COPS=?"
-    [ip_address]="AT+CIFSR"
     
-    # SMS
+    # ========== VOICE CALLS ==========
+    [answer]="ATA"
+    [hangup]="ATH"
+    
+    # ========== SMS ==========
     [sms_text_mode]="AT+CMGF=1"
     [sms_pdu_mode]="AT+CMGF=0"
-    [list_sms]="AT+CMGL=\"ALL\""
+    [list_sms_all]="AT+CMGL=\"ALL\""
+    [list_sms_unread]="AT+CMGL=\"REC UNREAD\""
+    [list_sms_read]="AT+CMGL=\"REC READ\""
+    [list_sms_unsent]="AT+CMGL=\"STO UNSENT\""
+    [list_sms_sent]="AT+CMGL=\"STO SENT\""
     
-    # GPS
+    # ========== GPS/GNSS ==========
     [gps_on]="AT+CGPS=1"
     [gps_off]="AT+CGPS=0"
+    [gps_on_glonass]="AT+CGPS=1,3"
     [gps_info]="AT+CGPSINFO"
     
-    # WiFi (ESP32/ESP8266)
+    # ========== DATA/INTERNET ==========
+    [ip_address]="AT+CIFSR"
+    
+    # ========== ADVANCED ==========
+    [ussd_query]="AT+CUSD"
+    [sms_storage]="AT+CPMS"
+    
+    # ========== WiFi (ESP32/ESP8266) ==========
     [wifi_station]="AT+CWMODE=1"
     [wifi_ap]="AT+CWMODE=2"
     [wifi_both]="AT+CWMODE=3"
     [wifi_scan]="AT+CWLAP"
 )
+
+# ==================== CUSTOM COMMANDS MANAGEMENT ====================
+
+# Load custom commands from config file
+load_custom_commands() {
+    if [ ! -f "$CUSTOM_COMMANDS_FILE" ]; then
+        log DEBUG "No custom commands file found: $CUSTOM_COMMANDS_FILE"
+        return 0
+    fi
+
+    log DEBUG "Loading custom commands from: $CUSTOM_COMMANDS_FILE"
+
+    while IFS='=' read -r cmd_name cmd_value; do
+        # Skip comments and empty lines
+        [[ -z "$cmd_name" || "$cmd_name" =~ ^[[:space:]]*# ]] && continue
+        
+        # Trim whitespace
+        cmd_name="${cmd_name// /}"
+        cmd_value="${cmd_value%${cmd_value##*[^ ]}}"
+        cmd_value="${cmd_value#${cmd_value%%[^ ]*}}"
+
+        if [ -n "$cmd_name" ] && [ -n "$cmd_value" ]; then
+            AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="$cmd_value"
+            log DEBUG "Loaded custom command: ${CUSTOM_CMD_PREFIX}${cmd_name} -> $cmd_value"
+        fi
+    done < "$CUSTOM_COMMANDS_FILE"
+}
+
+# Add new custom command
+add_custom_command() {
+    local cmd_name="$1"
+    local cmd_value="$2"
+
+    if [ -z "$cmd_name" ] || [ -z "$cmd_value" ]; then
+        log ERROR "Usage: add_custom_command <name> <at_command>"
+        return 1
+    fi
+
+    # Validate command starts with AT
+    if ! [[ "$cmd_value" =~ ^AT ]]; then
+        log ERROR "AT command must start with 'AT': $cmd_value"
+        return 1
+    fi
+
+    # Create directory if needed
+    mkdir -p "$(dirname "$CUSTOM_COMMANDS_FILE")"
+
+    # Add to in-memory map
+    AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="$cmd_value"
+    
+    # Append to config file
+    echo "${cmd_name}=${cmd_value}" >> "$CUSTOM_COMMANDS_FILE"
+    
+    log INFO "Custom command added: ${CUSTOM_CMD_PREFIX}${cmd_name} -> $cmd_value"
+    log INFO "Saved to: $CUSTOM_COMMANDS_FILE"
+    
+    return 0
+}
+
+# Remove custom command
+remove_custom_command() {
+    local cmd_name="$1"
+
+    if [ -z "$cmd_name" ]; then
+        log ERROR "Usage: remove_custom_command <name>"
+        return 1
+    fi
+
+    local full_cmd_name="${CUSTOM_CMD_PREFIX}${cmd_name}"
+
+    # Remove from in-memory map
+    if [ -z "${AT_COMMANDS[$full_cmd_name]:-}" ]; then
+        log ERROR "Custom command not found: $full_cmd_name"
+        return 1
+    fi
+
+    unset AT_COMMANDS["$full_cmd_name"]
+
+    # Remove from config file
+    if [ -f "$CUSTOM_COMMANDS_FILE" ]; then
+        sed -i "/^${cmd_name}=/d" "$CUSTOM_COMMANDS_FILE"
+        log INFO "Custom command removed: $full_cmd_name"
+    fi
+
+    return 0
+}
+
+# List custom commands
+list_custom_commands() {
+    log INFO "=== Custom Commands ==="
+    
+    local found=0
+    for cmd in "${!AT_COMMANDS[@]}"; do
+        if [[ "$cmd" =~ ^${CUSTOM_CMD_PREFIX} ]]; then
+            local display_name="${cmd#$CUSTOM_CMD_PREFIX}"
+            echo "  $display_name -> ${AT_COMMANDS[$cmd]}"
+            ((found++))
+        fi
+    done
+
+    if [ $found -eq 0 ]; then
+        echo "  (no custom commands defined)"
+    else
+        echo "  Total: $found custom command(s)"
+    fi
+
+    echo ""
+    echo "To add custom command:"
+    echo "  $0 add-command <name> \"<at_command>\""
+    echo ""
+    echo "To remove custom command:"
+    echo "  $0 remove-command <name>"
+    echo ""
+}
 
 # Logging
 log() {
@@ -85,11 +221,170 @@ log() {
         DEBUG) [ "$VERBOSE" -eq 1 ] && echo -e "${BLUE}[DEBUG]${NC} $msg" ;;
         CMD)   echo -e "${CYAN}[CMD]${NC} $msg" ;;
         RESP)  echo -e "${MAGENTA}[RESP]${NC} $msg" ;;
+        SUCCESS) echo -e "${GREEN}[SUCCESS]${NC} $msg" ;;
     esac
     
     if [ -w "$(dirname "$LOG_FILE")" ] 2>/dev/null; then
         echo "[$timestamp] [$level] $msg" >> "$LOG_FILE"
     fi
+}
+
+# ==================== RESPONSE PARSING HELPERS ====================
+# Based on Telit AT Commands Reference Guide r18
+
+# Parse +CSQ: rssi,ber response (Signal Quality)
+parse_csq_response() {
+    local response="$1"
+    local rssi ber
+
+    if [[ $response =~ \+CSQ:[[:space:]]*([0-9]+),([0-9]+) ]]; then
+        rssi="${BASH_REMATCH[1]}"
+        ber="${BASH_REMATCH[2]}"
+
+        local rssi_quality="UNKNOWN"
+        local rssi_dbm="N/A"
+        if [ "$rssi" -eq 0 ]; then
+            rssi_quality="NO_SIGNAL"
+            rssi_dbm="< -113 dBm"
+        elif [ "$rssi" -le 9 ]; then
+            rssi_quality="WEAK"
+            rssi_dbm="-113 to -51 dBm"
+        elif [ "$rssi" -le 15 ]; then
+            rssi_quality="GOOD"
+            rssi_dbm="-51 to -25 dBm"
+        elif [ "$rssi" -le 20 ]; then
+            rssi_quality="VERY_GOOD"
+            rssi_dbm="-25 to -20 dBm"
+        elif [ "$rssi" -le 31 ]; then
+            rssi_quality="EXCELLENT"
+            rssi_dbm="> -20 dBm"
+        elif [ "$rssi" -eq 99 ]; then
+            rssi_quality="NOT_DETECTABLE"
+            rssi_dbm="N/A"
+        fi
+
+        local ber_quality="UNKNOWN"
+        if [ "$ber" -eq 0 ]; then
+            ber_quality="EXCELLENT (<0.2%)"
+        elif [ "$ber" -le 3 ]; then
+            ber_quality="GOOD"
+        elif [ "$ber" -le 6 ]; then
+            ber_quality="DEGRADING"
+        elif [ "$ber" -eq 7 ]; then
+            ber_quality="POOR (>12.8%)"
+        elif [ "$ber" -eq 99 ]; then
+            ber_quality="NOT_DETECTABLE"
+        fi
+
+        echo "RSSI=$rssi BER=$ber RSSI_QUALITY=$rssi_quality RSSI_DBM='$rssi_dbm' BER_QUALITY='$ber_quality'"
+        return 0
+    else
+        log ERROR "Invalid +CSQ response format: $response"
+        return 1
+    fi
+}
+
+# Parse +CREG: n,stat[,lac,ci] response (Network Registration)
+parse_creg_response() {
+    local response="$1"
+
+    if [[ $response =~ \+CREG:[[:space:]]*([0-9]+),([0-9]+)(?:,\"([0-9A-F]+)\",\"([0-9A-F]+)\")? ]]; then
+        local n="${BASH_REMATCH[1]}"
+        local stat="${BASH_REMATCH[2]}"
+        local lac="${BASH_REMATCH[3]:-N/A}"
+        local ci="${BASH_REMATCH[4]:-N/A}"
+
+        local status_text="UNKNOWN"
+        local is_registered=0
+        case "$stat" in
+            0) status_text="NOT_REGISTERED (not searching)" ;;
+            1) status_text="REGISTERED_HOME"; is_registered=1 ;;
+            2) status_text="SEARCHING" ;;
+            3) status_text="REGISTRATION_DENIED" ;;
+            5) status_text="REGISTERED_ROAMING"; is_registered=1 ;;
+        esac
+
+        echo "N=$n STAT=$stat STATUS='$status_text' IS_REGISTERED=$is_registered LAC=$lac CELL_ID=$ci"
+        return 0
+    else
+        log ERROR "Invalid +CREG response format: $response"
+        return 1
+    fi
+}
+
+# Parse +CGPSINFO response (GPS Position)
+parse_cgpsinfo_response() {
+    local response="$1"
+
+    if [[ $response =~ \+CGPSINFO:[[:space:]]*([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+) ]]; then
+        local lat="${BASH_REMATCH[1]}"
+        local lon="${BASH_REMATCH[2]}"
+        local alt="${BASH_REMATCH[3]}"
+        local speed="${BASH_REMATCH[4]}"
+        local course="${BASH_REMATCH[5]}"
+        local timestamp="${BASH_REMATCH[6]}"
+
+        local ts_formatted="${timestamp:0:4}-${timestamp:4:2}-${timestamp:6:2} ${timestamp:8:2}:${timestamp:10:2}:${timestamp:12:2}"
+
+        echo "LAT=$lat LON=$lon ALT=${alt}m SPEED=${speed}km/h COURSE=${course}° TIMESTAMP='$ts_formatted'"
+        return 0
+    else
+        log ERROR "Invalid +CGPSINFO response format: $response"
+        return 1
+    fi
+}
+
+# Check response for errors and interpret error codes
+check_response_error() {
+    local response="$1"
+
+    if [[ "$response" == "ERROR" ]]; then
+        log ERROR "Command error: Generic ERROR response"
+        return 1
+    fi
+
+    if [[ $response =~ \+CME\ ERROR:[[:space:]]*([0-9]+) ]]; then
+        local error_code="${BASH_REMATCH[1]}"
+        local error_desc=""
+        case "$error_code" in
+            4) error_desc="Operation not allowed" ;;
+            5) error_desc="Operation not supported" ;;
+            13) error_desc="Text string too long" ;;
+            14) error_desc="SIM busy" ;;
+            20) error_desc="Memory full" ;;
+            21) error_desc="Invalid memory index" ;;
+            40) error_desc="No network service" ;;
+            *) error_desc="Device-specific error" ;;
+        esac
+        log ERROR "Device error (+CME ERROR $error_code): $error_desc"
+        return 1
+    fi
+
+    if [[ $response =~ \+CMS\ ERROR:[[:space:]]*([0-9]+) ]]; then
+        local error_code="${BASH_REMATCH[1]}"
+        local error_desc=""
+        case "$error_code" in
+            21) error_desc="Device busy" ;;
+            38) error_desc="Network timeout" ;;
+            41) error_desc="Invalid PDU mode parameter" ;;
+            301) error_desc="No network service" ;;
+            321) error_desc="SMPP error (device specific)" ;;
+            *) error_desc="SMS-specific error" ;;
+        esac
+        log ERROR "SMS error (+CMS ERROR $error_code): $error_desc"
+        return 1
+    fi
+
+    return 0
+}
+
+# Read UART response until terminator is matched or timeout occurs
+read_uart_response() {
+    local timeout_secs="${1:-$TIMEOUT}"
+    local terminator_regex="${2:-^(OK|ERROR|\+CME ERROR|\+CMS ERROR)$}"
+
+    timeout "$timeout_secs" stdbuf -oL cat "$UART_PORT" 2>/dev/null | \
+        awk -v term="$terminator_regex" 'BEGIN{RS="\n"} {gsub(/\r/, ""); print; if ($0 ~ term) exit}'
 }
 
 # Get line ending
@@ -188,32 +483,54 @@ init_uart() {
 send_at_command() {
     local cmd="$1"
     local wait="${2:-$RESPONSE_WAIT}"
+    local terminator_regex="${3:-^(OK|ERROR|\+CME ERROR|\+CMS ERROR)$}"
     local line_end=$(get_line_ending)
-    
+
     log CMD "Sending: $cmd"
-    
+
     # Clear input buffer
     cat "$UART_PORT" > /dev/null 2>&1 &
     local cat_pid=$!
     sleep 0.1
     kill $cat_pid 2>/dev/null || true
-    
+
     # Send command
-    printf "${cmd}${line_end}" > "$UART_PORT"
-    
+    printf "%s" "${cmd}${line_end}" > "$UART_PORT"
+
     # Wait and read response
     sleep "$wait"
-    
-    local response=""
-    if timeout "$TIMEOUT" cat "$UART_PORT" > /tmp/uart_response_$$ 2>/dev/null; then
-        response=$(cat /tmp/uart_response_$$)
-    fi
-    rm -f /tmp/uart_response_$$
-    
+
+    local response
+    response=$(read_uart_response "$TIMEOUT" "$terminator_regex" | sed '/^$/d')
+
     if [ -n "$response" ]; then
         echo "$response" | while IFS= read -r line; do
             [ -n "$line" ] && log RESP "$line"
         done
+
+        # Parse and log useful summaries
+        if echo "$response" | grep -q "^+CSQ:"; then
+            local csq_summary
+            csq_summary=$(parse_csq_response "$(echo "$response" | grep -m1 "^+CSQ:")") || true
+            [ -n "$csq_summary" ] && log INFO "Signal: $csq_summary"
+        fi
+
+        if echo "$response" | grep -q "^+CREG:"; then
+            local creg_summary
+            creg_summary=$(parse_creg_response "$(echo "$response" | grep -m1 "^+CREG:")") || true
+            [ -n "$creg_summary" ] && log INFO "Network: $creg_summary"
+        fi
+
+        if echo "$response" | grep -q "^+CGPSINFO:"; then
+            local gps_summary
+            gps_summary=$(parse_cgpsinfo_response "$(echo "$response" | grep -m1 "^+CGPSINFO:")") || true
+            [ -n "$gps_summary" ] && log INFO "GPS: $gps_summary"
+        fi
+
+        if ! check_response_error "$(echo "$response" | tail -n 1)"; then
+            return 1
+        fi
+
         echo "$response"
         return 0
     else
@@ -250,6 +567,7 @@ interactive_mode() {
     echo -e "${CYAN}Type AT commands or special commands:${NC}"
     echo -e "${CYAN}  !help       - Show help${NC}"
     echo -e "${CYAN}  !presets    - List preset commands${NC}"
+    echo -e "${CYAN}  !custom     - List/manage custom commands${NC}"
     echo -e "${CYAN}  !config     - Show configuration${NC}"
     echo -e "${CYAN}  !wait <sec> - Change response wait time${NC}"
     echo -e "${CYAN}  !monitor    - Start monitoring mode${NC}"
@@ -296,6 +614,20 @@ interactive_mode() {
                     echo "  $preset -> ${AT_COMMANDS[$preset]}"
                 done | sort
                 ;;
+            
+            !custom)
+                list_custom_commands
+                read -p "Add custom command? (y/n): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    read -p "Enter command name: " custom_name
+                    read -p "Enter AT command: " custom_cmd
+                    if add_custom_command "$custom_name" "$custom_cmd"; then
+                        AT_COMMANDS["${CUSTOM_CMD_PREFIX}${custom_name}"]="$custom_cmd"
+                    fi
+                fi
+                ;;
+            
             !config)
                 echo "Current Configuration:"
                 echo "  Port: $UART_PORT"
@@ -318,6 +650,18 @@ interactive_mode() {
             !preset\ *)
                 local preset_name="${cmd#!preset }"
                 send_preset "$preset_name"
+                ;;
+            AT+CMGS=*)
+                # Interactive SMS send flow
+                local number
+                number=$(echo "$cmd" | sed -n 's/^AT+CMGS="\?\(.*\)"\?$/\1/p')
+                if [ -z "$number" ]; then
+                    echo "Invalid AT+CMGS format. Use: AT+CMGS=\"number\""
+                    continue
+                fi
+                echo -n "Enter SMS message: "
+                read -r sms_message
+                send_sms "$number" "$sms_message"
                 ;;
             "")
                 continue
@@ -410,15 +754,39 @@ send_sms() {
     
     # Set text mode
     send_at_command "AT+CMGF=1" 1 || return 1
-    
-    # Start SMS
-    send_at_command "AT+CMGS=\"$number\"" 1 || return 1
-    
-    # Send message
-    printf "${message}\x1A" > "$UART_PORT"
+
+    # Start SMS (wait for '>' prompt)
+    local response
+    response=$(send_at_command "AT+CMGS=\"$number\"" 1 "^(>|ERROR|\\+CME ERROR|\\+CMS ERROR)$") || return 1
+
+    if ! echo "$response" | grep -q ">"; then
+        log ERROR "SMS prompt not received"
+        return 1
+    fi
+
+    # Send message and Ctrl+Z (0x1A)
+    printf "%s\x1A" "$message" > "$UART_PORT"
     sleep 2
-    
-    timeout 5 cat "$UART_PORT" || true
+
+    # Read final response
+    local final_response
+    final_response=$(read_uart_response 10 "^(OK|ERROR|\\+CME ERROR|\\+CMS ERROR)$" | sed '/^$/d')
+
+    if [ -n "$final_response" ]; then
+        echo "$final_response" | while IFS= read -r line; do
+            [ -n "$line" ] && log RESP "$line"
+        done
+
+        if ! check_response_error "$(echo "$final_response" | tail -n 1)"; then
+            return 1
+        fi
+
+        log SUCCESS "SMS sent successfully"
+        return 0
+    fi
+
+    log WARN "No SMS confirmation received"
+    return 1
 }
 
 # Run command script
@@ -486,6 +854,15 @@ Commands:
     discover            Auto-discover device capabilities
     auto-baud           Auto-detect baud rate
     sms NUMBER "MSG"    Send SMS message
+    dial NUMBER          Dial voice call (ATD<number>;)
+    answer              Answer incoming call (ATA)
+    hangup              Hang up active call (ATH)
+    read-sms ID          Read SMS message by ID (AT+CMGR)
+    delete-sms ID        Delete SMS message by ID (AT+CMGD)
+    ussd "CODE"         Send USSD code (AT+CUSD)
+    add-command NAME "CMD"    Add custom command
+    remove-command NAME       Remove custom command
+    list-command              List all custom commands
 
 Options:
     -p PORT             Serial port (default: $UART_PORT)
@@ -546,6 +923,44 @@ Examples:
     
     # Send SMS
     $0 sms "+1234567890" "Hello from UART"
+
+    # Voice calls
+    $0 dial "+1234567890"
+    $0 answer
+    $0 hangup
+
+    # Read/delete SMS
+    $0 read-sms 1
+    $0 delete-sms 1
+
+    # USSD
+    $0 ussd "*123#"
+
+Examples of Custom Commands:
+    # Add a custom command to get IMEI
+    $0 add-command "get_imei" "AT+GSN"
+    $0 preset custom_get_imei
+    
+    # Add a custom command for device status check
+    $0 add-command "device_status" "ATI"
+    
+    # List all custom commands
+    $0 list-command
+    
+    # Remove a custom command
+    $0 remove-command "get_imei"
+    
+    # In interactive mode, add command on-the-fly
+    $0 interactive
+    AT> !custom
+
+Custom Commands Storage:
+    Custom commands are saved to: $HOME/.uart-tools/custom_commands.conf
+    Each line format: commandname=AT+COMMAND
+    Example contents:
+        get_imei=AT+GSN
+        check_status=ATI
+        signal=AT+CSQ
     
     # Custom configuration
     $0 -p /dev/ttyACM0 -b 115200 -P even send "AT"
@@ -605,11 +1020,39 @@ main() {
     
     log INFO "=== UART AT Command Utility Started ==="
     log INFO "Port: $UART_PORT | Baud: $BAUD_UART | Format: ${DATA_BITS}${PARITY:0:1}${STOP_BITS}"
-    
+
+    # Load custom commands
+    load_custom_commands
+
     # Commands that don't need UART init
     case "$COMMAND" in
         auto-baud)
             auto_detect_baud || exit 1
+            exit 0
+            ;;
+        
+        add-command)
+            if [ ${#ARGS[@]} -lt 2 ]; then
+                log ERROR "add-command requires name and AT command"
+                echo "Usage: $0 add-command <name> \"<at_command>\""
+                echo "Example: $0 add-command get_imei \"AT+GSN\""
+                exit 1
+            fi
+            add_custom_command "${ARGS[0]}" "${ARGS[1]}" || exit 1
+            exit 0
+            ;;
+        
+        remove-command)
+            if [ ${#ARGS[@]} -lt 1 ]; then
+                log ERROR "remove-command requires command name"
+                exit 1
+            fi
+            remove_custom_command "${ARGS[0]}" || exit 1
+            exit 0
+            ;;
+        
+        list-command)
+            list_custom_commands
             exit 0
             ;;
     esac
@@ -661,6 +1104,45 @@ main() {
                 exit 1
             fi
             send_sms "${ARGS[0]}" "${ARGS[1]}" || exit 1
+            ;;
+        dial)
+            if [ ${#ARGS[@]} -lt 1 ]; then
+                log ERROR "Dial requires a phone number"
+                exit 1
+            fi
+            send_at_command "ATD${ARGS[0]};" || exit 1
+            ;;
+
+        answer)
+            send_at_command "ATA" || exit 1
+            ;;
+
+        hangup)
+            send_at_command "ATH" || exit 1
+            ;;
+
+        read-sms)
+            if [ ${#ARGS[@]} -lt 1 ]; then
+                log ERROR "read-sms requires a message ID"
+                exit 1
+            fi
+            send_at_command "AT+CMGR=${ARGS[0]}" || exit 1
+            ;;
+
+        delete-sms)
+            if [ ${#ARGS[@]} -lt 1 ]; then
+                log ERROR "delete-sms requires a message ID"
+                exit 1
+            fi
+            send_at_command "AT+CMGD=${ARGS[0]}" || exit 1
+            ;;
+
+        ussd)
+            if [ ${#ARGS[@]} -lt 1 ]; then
+                log ERROR "ussd requires a USSD code (e.g., *123#)"
+                exit 1
+            fi
+            send_at_command "AT+CUSD=1,\"${ARGS[0]}\"" || exit 1
             ;;
             
         *)
