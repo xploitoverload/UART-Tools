@@ -68,7 +68,8 @@ UART-Tools/
 ├── rce.sh         # Remote command execution framework
 ├── fw-update.sh        # Firmware update orchestrator
 ├── logger.sh          # Traffic capture and analysis
-├── uart_menu.sh            # Interactive TUI launcher
+├── AT.sh              # AT command utility for modems/cellular
+├── menu.sh            # Interactive TUI launcher
 └── lib/                    # Shared library functions (future)
     ├── uart_common.sh      # Common utility functions
     ├── uart_protocol.sh    # Protocol implementations
@@ -561,6 +562,173 @@ Duration: 1h 15m 32s
 - Error tracking
 - Compliance logging
 - Reverse engineering
+
+---
+
+### 6. AT.sh - AT Command Utility
+
+Comprehensive AT command interface for cellular modems, GSM devices, and embedded systems.
+
+#### Synopsis
+```bash
+AT.sh [OPTIONS] COMMAND [ARGS]
+```
+
+#### Commands
+```
+test                     Test AT connection (AT)
+info                     Get device information
+send COMMAND             Send raw AT command
+list-commands            List all available AT commands
+list-custom              List custom commands
+add-custom NAME TYPE CMD Add custom command (type: at|bash)
+remove-custom NAME       Remove custom command
+sms-list [STATUS]        List SMS messages (status: ALL|RECEIVED|UNREAD|SENT)
+sms-send NUMBER TEXT     Send SMS message
+gps-on | gps-off         Enable/disable GPS
+gps-info                 Get GPS information
+network-status           Show network registration status
+signal-quality           Get signal quality
+operator                 Get current operator information
+```
+
+#### Options
+```
+-p PORT           Serial port (default: /dev/ttyUSB0)
+-b BAUD           Baud rate (default: 4800)
+--data-bits N     Data bits (default: 8)
+--stop-bits N     Stop bits (default: 1)
+--parity TYPE     Parity: none|even|odd (default: none)
+--flow-control    Enable RTS/CTS flow control
+-t TIMEOUT        Command timeout in seconds (default: 2)
+-w DELAY          Response wait time in ms (default: 1000)
+--line-ending     Line ending: crlf|lf (default: crlf)
+-v, --verbose     Verbose output
+-h, --help        Display help message
+```
+
+#### Environment Variables
+```bash
+UART_PORT              # Serial port (default: /dev/ttyUSB0)
+BAUD_UART              # Baud rate (default: 4800)
+DATA_BITS              # Data bits (default: 8)
+STOP_BITS              # Stop bits (default: 1)
+PARITY                 # Parity mode (default: none)
+FLOW_CONTROL           # Flow control type
+TIMEOUT                # Command timeout (default: 2)
+RESPONSE_WAIT          # Response wait time ms (default: 1000)
+LINE_ENDING            # Line ending convention (default: crlf)
+VERBOSE                # Verbose mode (0 or 1)
+CUSTOM_COMMANDS_FILE   # Custom commands config
+LOG_FILE               # Log file path
+```
+
+#### Examples
+```bash
+# Test connection
+./AT.sh test
+
+# Get device information
+./AT.sh info
+
+# List all available commands
+./AT.sh list-commands
+
+# Send custom AT command
+./AT.sh send "AT+CSQ"
+
+# Network operations
+./AT.sh network-status
+./AT.sh signal-quality
+./AT.sh operator
+
+# SMS operations
+./AT.sh sms-list UNREAD
+./AT.sh sms-send +1234567890 "Hello from device"
+
+# GPS operations
+./AT.sh gps-on
+./AT.sh gps-info
+./AT.sh gps-off
+
+# Custom commands
+./AT.sh add-custom "check_signal" "at" "AT+CSQ"
+./AT.sh list-custom
+./AT.sh send "check_signal"
+
+# Verbose mode with custom baud
+./AT.sh -b 9600 -v info
+
+# Using environment variables
+UART_PORT=/dev/ttyACM0 BAUD_UART=115200 ./AT.sh test
+```
+
+#### AT Command Categories
+
+**Basic Commands**
+- `AT` - Test connection
+- `ATI` - Device information
+- `ATE0/ATE1` - Echo control
+- `ATZ` - Reset
+- `AT&F` - Factory reset
+- `AT&W` - Save config
+- `AT&V` - Display config
+
+**Identification**
+- `AT+GMI` - Manufacturer
+- `AT+GMM` - Model
+- `AT+GMR` - Firmware version
+- `AT+GSN` - Serial number
+- `AT+GCAP` - Capabilities
+
+**Network/Cellular**
+- `AT+CPIN?` - SIM status
+- `AT+CSQ` - Signal quality
+- `AT+CREG?` - Network registration
+- `AT+COPS?` - Current operator
+- `AT+COPS=?` - List operators
+
+**SMS Operations**
+- `AT+CMGF` - Set SMS mode (0=PDU, 1=Text)
+- `AT+CMGL` - List messages
+- `AT+CMGD` - Delete message
+- `AT+CMGS` - Send message
+
+**GPS/GNSS**
+- `AT+CGPS` - GPS control
+- `AT+CGPSINFO` - GPS information
+
+**WiFi** (ESP32/ESP8266)
+- `AT+CWMODE` - WiFi mode
+- `AT+CWLAP` - WiFi scan
+
+#### Return Codes
+- `0` - Success
+- `1` - Port error or not accessible
+- `2` - Invalid command or syntax error
+- `3` - Timeout waiting for response
+- `4` - Device returned error
+- `5` - Command not supported
+
+#### Use Cases
+- Modem/Cellular device testing and configuration
+- GPS/GNSS data acquisition
+- SMS management and testing
+- Network monitoring and diagnostics
+- IoT device communication
+- Firmware parameter configuration
+- Signal quality monitoring
+- Custom device control sequences
+
+#### Configuration File Format
+
+`~/.uart-tools/custom_commands.conf`:
+```
+# Format: name|type|command
+check_battery|at|AT+CBC
+get_time|bash|date +%s
+custom_status|at|AT+CIMI
+```
 
 ---
 
