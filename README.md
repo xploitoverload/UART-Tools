@@ -1,4 +1,7 @@
 # [CLASSIFIED] UART EXPLOITATION TOOLKIT
+
+> 🔗 **Quick Links:** [README](README.md) · [Development Guide](development.md) · [Contributing](CONTRIBUTING.md) · [License](LICENSE)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-green.svg)]()
 [![Shell: Bash 4.0+](https://img.shields.io/badge/Shell-Bash%204.0%2B-orange.svg)]()
@@ -28,6 +31,32 @@
 > UNAUTHORIZED ACCESS WILL BE PROSECUTED
 > ALL ACTIVITY IS LOGGED AND MONITORED
 ```
+
+---
+
+## 📖 DOCUMENTATION NAVIGATION
+
+> **New to this project?** Start here: [development.md](development.md)
+
+### 📚 Complete Documentation Suite
+
+| File | Content | For Whom |
+|------|---------|----------|
+| **[development.md](development.md)** 📖 | Complete technical guide, API reference, architecture, setup, troubleshooting | Developers & Users |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** 🤝 | How to contribute, code style, testing, pull requests | Contributors |
+| **[LICENSE](LICENSE)** ⚖️ | MIT License & legal disclaimer | Legal/Compliance |
+| **[README.md](README.md)** 🔐 | Arsenal overview, attack scenarios, usage examples | Everyone |
+
+### 🎯 Quick Navigation
+
+**I want to...**
+- 🚀 **Get started** → Read [development.md - Installation](development.md#installation)
+- 🔧 **Understand the architecture** → See [development.md - Architecture](development.md#architecture)
+- 📚 **See all available commands** → Check [development.md - Core Utilities](development.md#core-utilities)
+- ⚙️ **Configure everything** → Look at [development.md - Configuration](development.md#configuration)
+- 🤔 **Fix a problem** → Visit [development.md - Troubleshooting](development.md#troubleshooting)
+- 💻 **Write code/contribute** → Check [CONTRIBUTING.md](CONTRIBUTING.md)
+- ⚖️ **Understand legal terms** → Read [LICENSE](LICENSE)
 
 ---
 
