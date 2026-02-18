@@ -25,6 +25,7 @@ declare -A UTILITIES=(
     [3]="rce.sh|Remote Command Execution|Execute commands on device"
     [4]="fw-update.sh|Firmware Update|Flash firmware with backup and verification"
     [5]="logger.sh|Logger & Monitor|Capture and analyze serial output"
+    [6]="AT.sh|AT Command Utility|Send AT commands to cellular/modem devices"
 )
 
 # Display banner
@@ -291,6 +292,10 @@ ${YELLOW}Quick Help:${NC}
     ./logger.sh -h
     Features: colorization, filtering, analysis
 
+  ${GREEN}AT Command Utility:${NC}
+    ./AT.sh -h
+    Supports: Basic AT, Cellular, SMS, GPS, WiFi, Custom commands
+
 ${YELLOW}Common Issues:${NC}
 
   ${RED}Permission Denied:${NC}
@@ -376,7 +381,7 @@ main() {
         read -p "Select option: " choice
         
         case "$choice" in
-            [1-5])
+            [1-6])
                 launch_utility "$choice"
                 ;;
             q|Q)
