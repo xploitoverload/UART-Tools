@@ -104,48 +104,76 @@ load_custom_commands() {
 
     log DEBUG "Loading custom commands from: $CUSTOM_COMMANDS_FILE"
 
-    while IFS='=' read -r cmd_name cmd_value; do
+    while IFS='|' read -r cmd_name cmd_type cmd_value; do
         # Skip comments and empty lines
         [[ -z "$cmd_name" || "$cmd_name" =~ ^[[:space:]]*# ]] && continue
         
         # Trim whitespace
         cmd_name="${cmd_name// /}"
+        cmd_type="${cmd_type// /}"
         cmd_value="${cmd_value%${cmd_value##*[^ ]}}"
         cmd_value="${cmd_value#${cmd_value%%[^ ]*}}"
 
-        if [ -n "$cmd_name" ] && [ -n "$cmd_value" ]; then
-            AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="$cmd_value"
-            log DEBUG "Loaded custom command: ${CUSTOM_CMD_PREFIX}${cmd_name} -> $cmd_value"
+        if [ -n "$cmd_name" ] && [ -n "$cmd_type" ] && [ -n "$cmd_value" ]; then
+            if [ "$cmd_type" = "at" ]; then
+                AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="$cmd_value"
+                log DEBUG "Loaded custom AT command: ${CUSTOM_CMD_PREFIX}${cmd_name} -> $cmd_value"
+            elif [ "$cmd_type" = "bash" ]; then
+                AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="BASH:${cmd_value}"
+                log DEBUG "Loaded custom BASH command: ${CUSTOM_CMD_PREFIX}${cmd_name}"
+            fi
         fi
     done < "$CUSTOM_COMMANDS_FILE"
 }
 
-# Add new custom command
+# Add new custom command (type: at or bash)
 add_custom_command() {
     local cmd_name="$1"
-    local cmd_value="$2"
+    local cmd_type="${2:-at}"
+    local cmd_value="$3"
 
     if [ -z "$cmd_name" ] || [ -z "$cmd_value" ]; then
-        log ERROR "Usage: add_custom_command <name> <at_command>"
+        log ERROR "Usage: add_custom_command <name> [at|bash] <command>"
+        echo "Examples:"
+        echo "  add_custom_command 'signal' 'at' 'AT+CSQ'"
+        echo "  add_custom_command 'check_date' 'bash' 'date +%s'"
         return 1
     fi
 
-    # Validate command starts with AT
-    if ! [[ "$cmd_value" =~ ^AT ]]; then
-        log ERROR "AT command must start with 'AT': $cmd_value"
+    # If only 2 args provided, assume type is 'at'
+    if [ $# -eq 2 ]; then
+        cmd_value="$cmd_type"
+        cmd_type="at"
+    fi
+
+    # Validate type
+    if [ "$cmd_type" != "at" ] && [ "$cmd_type" != "bash" ]; then
+        log ERROR "Invalid command type: $cmd_type (must be 'at' or 'bash')"
         return 1
+    fi
+
+    # Validate AT commands
+    if [ "$cmd_type" = "at" ]; then
+        if ! [[ "$cmd_value" =~ ^AT ]]; then
+            log ERROR "AT command must start with 'AT': $cmd_value"
+            return 1
+        fi
     fi
 
     # Create directory if needed
     mkdir -p "$(dirname "$CUSTOM_COMMANDS_FILE")"
 
     # Add to in-memory map
-    AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="$cmd_value"
+    if [ "$cmd_type" = "bash" ]; then
+        AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="BASH:${cmd_value}"
+    else
+        AT_COMMANDS["${CUSTOM_CMD_PREFIX}${cmd_name}"]="$cmd_value"
+    fi
     
-    # Append to config file
-    echo "${cmd_name}=${cmd_value}" >> "$CUSTOM_COMMANDS_FILE"
+    # Append to config file (format: name|type|value)
+    echo "${cmd_name}|${cmd_type}|${cmd_value}" >> "$CUSTOM_COMMANDS_FILE"
     
-    log INFO "Custom command added: ${CUSTOM_CMD_PREFIX}${cmd_name} -> $cmd_value"
+    log INFO "Custom $cmd_type command added: ${CUSTOM_CMD_PREFIX}${cmd_name}"
     log INFO "Saved to: $CUSTOM_COMMANDS_FILE"
     
     return 0
@@ -172,7 +200,7 @@ remove_custom_command() {
 
     # Remove from config file
     if [ -f "$CUSTOM_COMMANDS_FILE" ]; then
-        sed -i "/^${cmd_name}=/d" "$CUSTOM_COMMANDS_FILE"
+        sed -i "/^${cmd_name}|/d" "$CUSTOM_COMMANDS_FILE"
         log INFO "Custom command removed: $full_cmd_name"
     fi
 
@@ -187,7 +215,16 @@ list_custom_commands() {
     for cmd in "${!AT_COMMANDS[@]}"; do
         if [[ "$cmd" =~ ^${CUSTOM_CMD_PREFIX} ]]; then
             local display_name="${cmd#$CUSTOM_CMD_PREFIX}"
-            echo "  $display_name -> ${AT_COMMANDS[$cmd]}"
+            local cmd_value="${AT_COMMANDS[$cmd]}"
+            local cmd_type="at"
+            
+            # Check if it's a bash command
+            if [[ "$cmd_value" =~ ^BASH: ]]; then
+                cmd_type="bash"
+                cmd_value="${cmd_value#BASH:}"
+            fi
+            
+            printf "  %-20s [%-4s] %s\n" "$display_name" "$cmd_type" "$cmd_value"
             ((found++))
         fi
     done
@@ -199,8 +236,11 @@ list_custom_commands() {
     fi
 
     echo ""
-    echo "To add custom command:"
+    echo "To add custom AT command:"
     echo "  $0 add-command <name> \"<at_command>\""
+    echo ""
+    echo "To add custom BASH command:"
+    echo "  $0 add-command <name> bash \"<bash_code>\""
     echo ""
     echo "To remove custom command:"
     echo "  $0 remove-command <name>"
@@ -556,8 +596,16 @@ send_preset() {
     fi
     
     local cmd="${AT_COMMANDS[$preset]}"
-    log INFO "Using preset '$preset': $cmd"
-    send_at_command "$cmd" "$RESPONSE_WAIT"
+    
+    # Check if it's a bash command (prefixed with BASH:)
+    if [[ "$cmd" =~ ^BASH: ]]; then
+        local bash_code="${cmd#BASH:}"
+        log INFO "Executing bash command '$preset': $bash_code"
+        eval "$bash_code"
+    else
+        log INFO "Using preset '$preset': $cmd"
+        send_at_command "$cmd" "$RESPONSE_WAIT"
+    fi
 }
 
 # Interactive mode
@@ -937,9 +985,16 @@ Examples:
     $0 ussd "*123#"
 
 Examples of Custom Commands:
-    # Add a custom command to get IMEI
+    # Add a custom AT command to get IMEI
     $0 add-command "get_imei" "AT+GSN"
     $0 preset custom_get_imei
+    
+    # Add a custom BASH command to get timestamp
+    $0 add-command "get_time" bash "date +%s"
+    $0 preset custom_get_time
+    
+    # Add a custom BASH command to check disk space
+    $0 add-command "disk_check" bash "df -h /"
     
     # Add a custom command for device status check
     $0 add-command "device_status" "ATI"
@@ -956,11 +1011,13 @@ Examples of Custom Commands:
 
 Custom Commands Storage:
     Custom commands are saved to: $HOME/.uart-tools/custom_commands.conf
-    Each line format: commandname=AT+COMMAND
+    Format: commandname|type|command_text
+    Types: 'at' = AT command, 'bash' = bash code
     Example contents:
-        get_imei=AT+GSN
-        check_status=ATI
-        signal=AT+CSQ
+        get_imei|at|AT+GSN
+        device_status|at|ATI
+        get_time|bash|date +%s
+        disk_check|bash|df -h /
     
     # Custom configuration
     $0 -p /dev/ttyACM0 -b 115200 -P even send "AT"
@@ -1033,12 +1090,21 @@ main() {
         
         add-command)
             if [ ${#ARGS[@]} -lt 2 ]; then
-                log ERROR "add-command requires name and AT command"
-                echo "Usage: $0 add-command <name> \"<at_command>\""
-                echo "Example: $0 add-command get_imei \"AT+GSN\""
+                log ERROR "add-command requires name and command"
+                echo "Usage: $0 add-command <name> [at|bash] <command>"
+                echo "Examples:"
+                echo "  $0 add-command get_imei \"AT+GSN\""
+                echo "  $0 add-command check_date bash \"date +%s\""
                 exit 1
             fi
-            add_custom_command "${ARGS[0]}" "${ARGS[1]}" || exit 1
+            
+            if [ ${#ARGS[@]} -eq 2 ]; then
+                # Type not specified, default to 'at'
+                add_custom_command "${ARGS[0]}" "at" "${ARGS[1]}" || exit 1
+            else
+                # Type specified
+                add_custom_command "${ARGS[0]}" "${ARGS[1]}" "${ARGS[2]}" || exit 1
+            fi
             exit 0
             ;;
         
