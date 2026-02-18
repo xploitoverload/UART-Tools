@@ -1,0 +1,55 @@
+MIT License
+
+Copyright (c) 2024 Kalpesh Solanki (xploitoverload)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## DISCLAIMER OF LIABILITY
+
+This software is provided as-is for educational, authorized testing, and 
+legitimate development purposes ONLY. Unauthorized access to computer systems
+is illegal. Users are responsible for ensuring they have proper authorization
+before using these tools on any device or system.
+
+The authors and contributors are NOT responsible for:
+- Unauthorized access or data breaches
+- Damage to systems or data loss
+- Any illegal use of these tools
+- Violations of computer fraud and abuse laws
+- Any consequences arising from the use of this software
+
+By using this software, you agree to:
+1. Use it only on systems you own or have explicit permission to test
+2. Comply with all applicable laws and regulations
+3. Not use it for malicious purposes
+4. Indemnify the authors from any liability
+
+---
+
+## ATTRIBUTION
+
+UART-Tools includes or is inspired by:
+- Telit AT Commands Reference Guide (r18)
+- Linux Serial Programming HOWTO
+- GNU lrzsz project (XMODEM/YMODEM/ZMODEM protocols)
+- GNU coreutils and bash open source community
+
+Special thanks to all contributors and the embedded systems community.
