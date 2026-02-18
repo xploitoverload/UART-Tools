@@ -48,6 +48,38 @@ TIME: [REDACTED]
 
 ---
 
+## [SECTION 01.5] :: DOCUMENTATION & LEGAL
+
+### 📚 Important Documentation
+
+| Document | Purpose | Read More |
+|----------|---------|-----------|
+| **[LICENSE](LICENSE)** | MIT License & Legal Disclaimer | Licensing terms and liability disclaimer |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | How to Contribute | Guidelines for submitting pull requests, bug reports, and enhancements |
+| **[development.md](development.md)** | Developer Guide | Complete technical documentation, API reference, architecture, and implementation details |
+
+### Quick Links:
+
+- 🔒 **[View Full License](LICENSE)** - MIT License with liability disclaimer
+- 🤝 **[Contributing Guidelines](CONTRIBUTING.md)** - Code of conduct, pull request process, styleguides
+- 📖 **[Development Guide](development.md)** - Architecture, API reference, configuration, troubleshooting
+
+### 📋 Table of Contents for development.md:
+- [Overview](#overview) - Features and use cases
+- [Architecture](#architecture) - Design principles and components
+- [Installation](#installation) - System requirements and setup
+- [Core Utilities](#core-utilities) - Detailed documentation for each tool
+- [API Reference](#api-reference) - Exit codes and environment variables  
+- [Configuration](#configuration) - Configuration files and precedence
+- [Development Guide](#development-guide) - Code style guidelines
+- [Testing](#testing) - Unit and integration testing
+- [Performance](#performance) - Benchmarks and optimization
+- [Troubleshooting](#troubleshooting) - Common issues and solutions
+- [Contributing](#contributing) - How to contribute
+- [Advanced Topics](#advanced-topics) - systemd, udev, CI/CD integration
+
+---
+
 ## [SECTION 02] :: ARSENAL OVERVIEW
 
 ```
@@ -821,6 +853,71 @@ DO NOT:
 
 "We're xploitoverload. We're everywhere."
 ```
+
+---
+
+## 📄 [SECTION 16] :: LEGAL & DOCUMENTATION
+
+### ⚖️ License & Legal Information
+
+This project is licensed under the **MIT License**. For complete legal information, licensing terms, and liability disclaimers, please refer to:
+
+**[→ View LICENSE](LICENSE)**
+
+Key points:
+- ✅ Free for commercial and personal use
+- ✅ Open source and modifiable
+- ⚠️ Use responsibly and legally
+- ⚠️ No warranty provided
+- ⚠️ Unauthorized access is illegal
+
+---
+
+### 🤝 Contributing to UART-Tools
+
+Want to contribute? We welcome bug reports, feature suggestions, and pull requests!
+
+**[→ Read CONTRIBUTING.md](CONTRIBUTING.md)**
+
+Includes:
+- 🐛 Bug reporting guidelines
+- ✨ Feature request process
+- 📝 Code styleguides
+- ✅ Testing requirements
+- 🔄 Pull request workflow
+
+---
+
+### 📚 Complete Developer Documentation
+
+For in-depth technical documentation, architecture details, API reference, and comprehensive guides:
+
+**[→ Read development.md](development.md)**
+
+Topics covered:
+- 🏗️ Architecture and design principles
+- 🛠️ Installation and setup
+- 📖 Complete API reference
+- ⚙️ Configuration management
+- 🧪 Testing strategies
+- ⚡ Performance optimization
+- 🔧 Troubleshooting guide
+- 🔐 Security considerations
+- 🐳 Docker integration
+- 🤖 CI/CD setup
+- 📱 systemd integration
+- 🎯 Advanced topics
+
+---
+
+### 📋 Quick Reference
+
+| File | Purpose | Audience |
+|------|---------|----------|
+| [README.md](README.md) | Project overview and arsenal | Everyone |
+| [LICENSE](LICENSE) | Legal terms and liability | Legal/Compliance |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines | Contributors |
+| [development.md](development.md) | Technical documentation | Developers |
 
 ---
 
