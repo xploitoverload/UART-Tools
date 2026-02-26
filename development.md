@@ -13,6 +13,13 @@
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Core Utilities](#core-utilities)
+  - [1. time-sync.sh](#1-time-syncsh---time-synchronization)
+  - [2. file-transfer.sh](#2-file-transfersh---file-transfer)
+  - [3. rce.sh](#3-rcesh---remote-command-execution)
+  - [4. fw-update.sh](#4-fw-updatesh---firmware-update)
+  - [5. logger.sh](#5-loggersh---traffic-capture-and-analysis)
+  - [6. AT.sh](#6-atsh---at-command-utility)
+  - [7. file-editor.sh](#7-file-editorsh---file-editor)
 - [API Reference](#api-reference)
 - [Configuration](#configuration)
 - [Development Guide](#development-guide)
@@ -46,6 +53,7 @@ The UART Development Toolkit is a comprehensive suite of shell-based utilities d
 - **Hardware Testing** - Automated test fixtures and CI/CD integration
 - **Education** - Teaching serial communication protocols
 - **Reverse Engineering** - Analyze device communication patterns
+- **File Management** - Edit config files, scripts, and logs line-by-line on any target
 
 ---
 
@@ -65,10 +73,11 @@ The UART Development Toolkit is a comprehensive suite of shell-based utilities d
 UART-Tools/
 ├── time-sync.sh       # Time synchronization daemon
 ├── file-transfer.sh   # File transfer with protocol support
-├── rce.sh         # Remote command execution framework
-├── fw-update.sh        # Firmware update orchestrator
+├── rce.sh             # Remote command execution framework
+├── fw-update.sh       # Firmware update orchestrator
 ├── logger.sh          # Traffic capture and analysis
 ├── AT.sh              # AT command utility for modems/cellular
+├── file-editor.sh     # Line-by-line file editor with backup & undo
 ├── menu.sh            # Interactive TUI launcher
 └── lib/                    # Shared library functions (future)
     ├── uart_common.sh      # Common utility functions
@@ -723,6 +732,153 @@ UART_PORT=/dev/ttyACM0 BAUD_UART=115200 ./AT.sh test
 #### Configuration File Format
 
 `~/.uart-tools/custom_commands.conf`:
+
+---
+
+### 7. file-editor.sh - File Editor
+
+Line-by-line file editing utility with append, prepend, insert, replace, delete, find-replace, and automatic backup/undo. Works on any plain-text file — config files, scripts, logs, etc.
+
+#### Synopsis
+```bash
+file-editor.sh [OPTIONS] [COMMAND [ARGS...]]
+```
+
+#### Options
+```
+-f FILE     Target file to edit
+-v          Verbose output
+-h          Show help
+```
+
+#### Commands (non-interactive)
+```
+view                         View file with line numbers
+view START END               View lines START to END
+append "text"                Append line to end of file
+prepend "text"               Prepend line to start of file
+insert-after  N "text"       Insert line after line N
+insert-before N "text"       Insert line before line N
+replace       N "text"       Replace line N with new text
+delete        N              Delete line N
+delete-range  S E            Delete lines S through E (inclusive)
+append-to     N "text"       Append text to end of line N (inline)
+prepend-to    N "text"       Prepend text to start of line N (inline)
+find-replace  "old" "new"    Literal find & replace (all occurrences)
+find-replace-regex "pat" "r" Regex find & replace (all occurrences)
+undo                         Restore from last backup
+```
+
+#### Interactive Menu (no arguments)
+Run `./file-editor.sh` with no arguments to launch the full TUI:
+
+```
+── File ────────────────────────────────────────
+  [s]  Select target file
+  [n]  Create new file
+  [v]  View file (all lines with numbers)
+  [r]  View range of lines
+
+── Add / Remove Lines ─────────────────────────
+  [a]  Append line(s) to end of file
+  [p]  Prepend line(s) to start of file
+  [ia] Insert line AFTER  line number
+  [ib] Insert line BEFORE line number
+  [d]  Delete a specific line
+  [dr] Delete a range of lines
+
+── Edit Lines ─────────────────────────────────
+  [rl] Replace entire line
+  [al] Append text to end of a line
+  [pl] Prepend text to start of a line
+
+── Search & Replace ───────────────────────────
+  [f]  Find & replace (literal text)
+  [fr] Find & replace (regex)
+
+── Other ───────────────────────────────────────
+  [u]  Undo last change
+  [h]  Help
+  [x]  Exit
+```
+
+#### Environment Variables
+```bash
+BACKUP_DIR    # Where to store backups (default: /tmp/file-editor-backups)
+VERBOSE       # Enable verbose output (0 or 1)
+```
+
+#### Examples
+```bash
+# View file with line numbers
+./file-editor.sh -f config.txt view
+
+# View only lines 10–20
+./file-editor.sh -f config.txt view 10 20
+
+# Append a new line at the end
+./file-editor.sh -f config.txt append "new_key=value"
+
+# Prepend a shebang to a script
+./file-editor.sh -f myscript.sh prepend '#!/bin/bash'
+
+# Insert a comment after line 5
+./file-editor.sh -f config.txt insert-after 5 "# inserted comment"
+
+# Insert a line before line 3
+./file-editor.sh -f config.txt insert-before 3 "# header"
+
+# Replace line 7
+./file-editor.sh -f config.txt replace 7 "host=new-server.local"
+
+# Delete line 10
+./file-editor.sh -f config.txt delete 10
+
+# Delete lines 15 through 20
+./file-editor.sh -f config.txt delete-range 15 20
+
+# Append text inline to the end of line 4
+./file-editor.sh -f config.txt append-to 4 " # reviewed"
+
+# Prepend text inline to the start of line 4
+./file-editor.sh -f config.txt prepend-to 4 "# "
+
+# Literal find & replace
+./file-editor.sh -f config.txt find-replace "old_host" "new_host"
+
+# Regex find & replace
+./file-editor.sh -f config.txt find-replace-regex "port=[0-9]+" "port=8080"
+
+# Undo last change
+./file-editor.sh -f config.txt undo
+
+# Interactive mode
+./file-editor.sh
+```
+
+#### Backup & Undo
+
+Every write operation (append, prepend, insert, replace, delete, find-replace) automatically creates a timestamped backup:
+
+```
+/tmp/file-editor-backups/
+├── config.txt.20260226_120000.bak
+├── config.txt.20260226_120015.bak
+└── config.txt.20260226_120030.bak
+```
+
+The `undo` command restores the most recent backup. A copy of the pre-undo state is saved as `*.before_undo.bak`.
+
+#### Return Codes
+- `0` - Success
+- `1` - File not found, not writable, or invalid line number
+
+#### Use Cases
+- Edit device configuration files without a full text editor
+- Automate patch application in CI/CD pipelines
+- Scriptable line-level modifications in shell automation
+- Safe log trimming with backup
+- Inject or remove lines from scripts programmatically
 ```
 # Format: name|type|command
 check_battery|at|AT+CBC
@@ -777,6 +933,9 @@ OUTPUT_DIR         # Output directory for logs
 FILTER             # Default filter pattern
 TIMESTAMP          # Enable timestamps
 HEX_MODE           # Enable hex mode
+
+# file-editor.sh
+BACKUP_DIR         # Backup storage directory (default: /tmp/file-editor-backups)
 ```
 
 ### Signal Handling
