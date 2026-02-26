@@ -26,6 +26,7 @@ declare -A UTILITIES=(
     [4]="fw-update.sh|Firmware Update|Flash firmware with backup and verification"
     [5]="logger.sh|Logger & Monitor|Capture and analyze serial output"
     [6]="AT.sh|AT Command Utility|Send AT commands to cellular/modem devices"
+    [7]="file-editor.sh|File Editor|Edit files line-by-line: append/prepend/insert/replace/delete"
 )
 
 # Display banner
@@ -296,6 +297,15 @@ ${YELLOW}Quick Help:${NC}
     ./AT.sh -h
     Supports: Basic AT, Cellular, SMS, GPS, WiFi, Custom commands
 
+  ${GREEN}File Editor:${NC}
+    ./file-editor.sh -h
+    ./file-editor.sh -f myfile.txt              (interactive)
+    ./file-editor.sh -f myfile.txt append "new line"
+    ./file-editor.sh -f myfile.txt insert-after 3 "comment"
+    ./file-editor.sh -f myfile.txt replace 5 "fixed line"
+    ./file-editor.sh -f myfile.txt delete 10
+    ./file-editor.sh -f myfile.txt find-replace "old" "new"
+
 ${YELLOW}Common Issues:${NC}
 
   ${RED}Permission Denied:${NC}
@@ -381,7 +391,7 @@ main() {
         read -p "Select option: " choice
         
         case "$choice" in
-            [1-6])
+            [1-7])
                 launch_utility "$choice"
                 ;;
             q|Q)
