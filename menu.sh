@@ -59,7 +59,7 @@ show_menu() {
             status="${RED}✗${NC}"
         fi
         
-        printf "  ${YELLOW}[%s]${NC} %s %-30s - %s\n" "$key" "$status" "$name" "$desc"
+        printf "  ${YELLOW}[%s]${NC} %b %-30s - %s\n" "$key" "$status" "$name" "$desc"
     done
     
     echo
